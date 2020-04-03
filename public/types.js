@@ -57,8 +57,13 @@
     exports.cardCanBePlayedOn = function(cardToBePlayed, cardOnTo)
     {
         console.log("cardCanBePlayedOn", cardToBePlayed, cardOnTo);
-        // TODO extend with color switcher cards (CSw, +4)
+        if (cardToBePlayed.face === this.FACE.PLUS4 || cardToBePlayed.face === this.FACE.COLORSWITCH) return true;
         return cardToBePlayed.color === this.COLOR.BLACK || cardToBePlayed.color === cardOnTo.color || cardToBePlayed.face === cardOnTo.face;
+    }
+
+    exports.hasChoosableColor = function(card)
+    {
+        return card.color === this.COLOR.BLACK;
     }
 
 })(typeof exports === 'undefined'? this['types']={}: exports);

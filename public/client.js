@@ -20,6 +20,11 @@ function createDeck(client)
     return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + '</span><div class="deck-cards" id="deck-cards-' + client.id + '"></div></div>';
 }
 
+function createColorChooserOverlay()
+{
+    return '<div class="card-color-chooser card-color-chooser-red" data-color="' + types.COLOR.RED + '"></div><div class="card-color-chooser card-color-chooser-green" data-color="' + types.COLOR.GREEN + '"></div><div class="card-color-chooser card-color-chooser-blue" data-color="' + types.COLOR.BLUE + '"></div><div class="card-color-chooser card-color-chooser-yellow" data-color="' + types.COLOR.YELLOW + '"></div>';
+}
+
 function createCard(card)
 {
     return '<div class="card-container"><div class="card card-' + (card.color === types.COLOR.SECRET ? 'secret' : types.colorToString(card.color).toLowerCase()) + ' card-' + (card.face === types.FACE.SECRET ? 'secret' : card.face) + '" data-color="' + card.color + '" data-face="' + card.face + '"><div class="card-inner"></div><div class="card-face-center">' + types.faceToString(card.face) + '</div><div class="card-face-top">' + types.faceToString(card.face) + '</div><div class="card-face-bottom">' + types.faceToString(card.face) + '</div></div></div>';
@@ -66,20 +71,38 @@ function playCard(evt)
     if (currentPlayer.cid !== socket.id) return;
     console.log('I am the current');
     let domElem = $(evt.target);
+    let chosenColor = null;
     if (! domElem.hasClass('card'))
     {
+        if (domElem.hasClass('card-color-chooser'))
+        {
+            chosenColor = domElem.data('color');
+        }
         let parents = domElem.parents('.card');
         if (parents.length === 0) return;
         domElem = $(parents[0]);
     }
+    $('.card-color-chooser').remove();
     if (domElem.parents('.own-deck').length === 0) return;
     console.log('Clicked own card');
     let card = {color: domElem.data('color'), face: domElem.data('face')};
     if (! types.cardCanBePlayedOn(card, lastPlayedCard)) return;
-    console.log('Card can be played');
+    console.log('Card can be played: ', card);
+    if (types.hasChoosableColor(card))
+    {
+        if (chosenColor === null)
+        {
+            domElem.append(createColorChooserOverlay());
+            return;
+        }
+        else
+        {
+            card.color = chosenColor;
+        }
+    }
     cardPendingPlayed = domElem;
     socket.emit('play card', card);
-    console.log(evt);
+
 }
 
 $(function () {

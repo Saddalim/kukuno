@@ -183,6 +183,45 @@ body
     border-width: 0.7rem;
 }
 
+.card-color-chooser
+{
+    position: absolute;
+    width: 50%;
+    height: 50%;
+}
+
+.card-color-chooser-red
+{
+    top: 0;
+    left: 0;
+    background: rgba(196, 32, 56, 0.7);
+    border-radius: 1rem 0 0 0;
+}
+
+.card-color-chooser-green
+{
+    top: 0;
+    right: 0;
+    background: rgba(59, 153, 56, 0.7);
+    border-radius: 0 1rem 0 0;
+}
+
+.card-color-chooser-blue
+{
+    bottom: 0;
+    left: 0;
+    background: rgba(0, 86, 166, 0.7);
+    border-radius: 0 0 1rem 0;
+}
+
+.card-color-chooser-yellow
+{
+    bottom: 0;
+    right: 0;
+    background: rgba(239, 211, 50, 0.7);
+    border-radius: 0 0 0 1rem;
+}
+
 .card-black
 {
     background: #000;

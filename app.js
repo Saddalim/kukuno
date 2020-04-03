@@ -198,6 +198,21 @@ function advanceTurn()
     io.emit('current player', {cid: clients[gameState.nextPlayerIdx].id});
 }
 
+function getPlayableCardIdxFromDeck(card, deck)
+{
+    return deck.findIndex(
+        cardInDeck => {
+            if (card.face === cardInDeck.face)
+            {
+                if (types.hasChoosableColor(card) && types.hasChoosableColor(cardInDeck))
+                {
+                    return true;
+                }
+                return card.face === cardInDeck.face
+            }
+        });
+}
+
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', function(req, res)
@@ -240,11 +255,15 @@ io.on('connection', function(socket)
         console.log('(' + socket.id + ') tries to play: ' + types.cardToString(cardToPlay));
         if (clients[gameState.nextPlayerIdx].id !== socket.id) return;
         if (! gameState.decks.hasOwnProperty(socket.id)) return;
-        let cardIdx = gameState.decks[socket.id].findIndex(cardInDeck => cardToPlay.color === cardInDeck.color && cardToPlay.face === cardInDeck.face);
+        let cardIdx = getPlayableCardIdxFromDeck(cardToPlay, gameState.decks[socket.id]);
         if (cardIdx === -1) return;
         if (! types.cardCanBePlayedOn(cardToPlay, gameState.playedCards[gameState.playedCards.length - 1])) return;
         console.log('And (s)he can!');
         let card = gameState.decks[socket.id][cardIdx];
+        if (types.hasChoosableColor(card))
+        {
+            card.color = cardToPlay.color;
+        }
         gameState.decks[socket.id].splice(cardIdx, 1);
         gameState.playedCards.push(card);
         io.emit('card played', {cid: socket.id, card: card});
