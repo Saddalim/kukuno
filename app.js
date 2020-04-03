@@ -79,6 +79,20 @@ function getNameOfClient(cid)
 }
 
 /**
+ * Gets the index of the client with the given ID
+ * @param cid
+ * @returns {number} The index, if client is known, -1 otherwise
+ */
+function getIdxOfClient(cid)
+{
+    for (let clientIdx = 0; clientIdx < clients.length; ++clientIdx)
+    {
+        if (clients[clientIdx].id === cid) return clientIdx;
+    }
+    return -1;
+}
+
+/**
  * Renames the given client. Does not send update to clients!
  * @param id ID of the client
  * @param name New name of the client
@@ -275,8 +289,14 @@ function restartGame()
 /**
  * Step onto the next player, and emit event to all clients
  */
-function advanceTurn()
+function advanceTurn(depth = 0)
 {
+    if (depth === gameState.decks.length)
+    {
+        // TODO end game
+        return;
+    }
+
     if (gameState.nextPlayerIdx === null && clients.length > 0) gameState.nextPlayerIdx = 0;
     else
     {
@@ -285,7 +305,15 @@ function advanceTurn()
         if (gameState.nextPlayerIdx < 0) gameState.nextPlayerIdx = clients.length;
     }
 
-    io.emit('current player', {cid: clients[gameState.nextPlayerIdx].id});
+    // Skip players with no cards remaining
+    if (gameState.decks[clients[gameState.nextPlayerIdx].id].length === 0)
+    {
+        advanceTurn(depth + 1);
+    }
+    else
+    {
+        io.emit('current player', {cid: clients[gameState.nextPlayerIdx].id});
+    }
 }
 
 /**
@@ -357,23 +385,32 @@ io.on('connection', function(socket)
 
     /**
      * A client tries to play a card given as {color, face}
-     * TODO async card plays, starter card plays
+     * TODO starter card plays
      */
     socket.on('play card', function(cardToPlay) {
 
         console.log(getNameOfClient(socket.id) + ' (' + socket.id + ') tries to play: ' + types.cardToString(cardToPlay));
+        let lastPlayedCard = getTopPlayedCard();
+        let asyncPlay = false;
         if (clients[gameState.nextPlayerIdx].id !== socket.id)
         {
-            console.log('But (s)he is not the current player :(');
-            return;
+            if (types.cardCanBeAsyncPlayedOn(cardToPlay, getTopPlayedCard()))
+            {
+                asyncPlay = true;
+            }
+            else
+            {
+                console.log('But (s)he is not the current player or card cannot be async played :(');
+                return;
+            }
+
         }
         if (! gameState.decks.hasOwnProperty(socket.id))
         {
             console.log('But (s)he does not have a deck :(');
             return;
         }
-        let lastPlayedCard = getTopPlayedCard();
-        if (! types.cardCanBePlayedOn(cardToPlay, lastPlayedCard))
+        if (! asyncPlay && ! types.cardCanBePlayedOn(cardToPlay, lastPlayedCard) && ! asyncPlayPossible)
         {
             console.log('But the chosen card (' + types.cardToString(cardToPlay) + ') cannot be played on top of ' + types.cardToString(lastPlayedCard));
             return;
@@ -398,7 +435,20 @@ io.on('connection', function(socket)
             card.color = cardToPlay.color;
         }
 
-        console.log('And (s)he can!');
+        if (asyncPlay)
+        {
+            let playerIdx = getIdxOfClient(socket.id);
+            if (playerIdx === -1)
+            {
+                console.log('But this client idx (' + playerIdx + ') is unknown');
+                return;
+            }
+
+            // Iterate so that callbacks will be handled
+            while (gameState.nextPlayerIdx !== playerIdx) advanceTurn();
+        }
+
+        console.log('And (s)he can!' + (asyncPlay ? ' Async play!' : ''));
 
         // Check for special cards
         switch (card.face)

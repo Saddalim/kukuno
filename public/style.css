@@ -172,6 +172,11 @@ body
     -webkit-text-stroke-width: 2px;
 }
 
+.card-num[data-face="6"], .card-num[data-face="9"]
+{
+    text-decoration: underline;
+}
+
 .own-deck .card-face-center, #table .card-face-center
 {
     font-size: 5rem;

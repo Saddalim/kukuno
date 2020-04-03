@@ -118,6 +118,19 @@
     };
 
     /**
+     * Checks whether the given card can be played on top of the other given card asynchronously (not in one's own turn)
+     * @param cardToBePlayed Card wanted to be played as {color, face}
+     * @param cardOnTo Current top card as {color, face}
+     * @returns {boolean} True, if can be played
+     */
+    exports.cardCanBeAsyncPlayedOn = function(cardToBePlayed, cardOnTo)
+    {
+        if (cardToBePlayed.face !== cardOnTo.face) return false;
+        if (this.hasChoosableColor(cardToBePlayed)) return true;
+        return cardToBePlayed.color === cardOnTo.color;
+    };
+
+    /**
      * Checks whether the given card has a choosable (wildcard black) color
      * @param card The card as {color, face}
      * @returns {boolean} True, if a color can be choosen

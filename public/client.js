@@ -44,7 +44,7 @@ function createColorChooserOverlay()
  */
 function createCard(card)
 {
-    return '<div class="card-container"><div class="card card-' + (card.color === types.COLOR.SECRET ? 'secret' : types.colorToString(card.color).toLowerCase()) + ' card-' + (card.face === types.FACE.SECRET ? 'secret' : card.face) + '" data-color="' + card.color + '" data-face="' + card.face + '"><div class="card-inner"></div><div class="card-face-center">' + types.faceToSymbol(card.face) + '</div><div class="card-face-top">' + types.faceToSymbol(card.face) + '</div><div class="card-face-bottom">' + types.faceToSymbol(card.face) + '</div></div></div>';
+    return '<div class="card-container"><div class="card card-' + (card.color === types.COLOR.SECRET ? 'secret' : types.colorToString(card.color).toLowerCase()) + ' card-' + (card.face === types.FACE.SECRET ? 'secret' : card.face) + '" data-color="' + card.color + '" data-face="' + card.face + '"><div class="card-inner"></div><div class="card-num card-face-center" data-face="' + types.faceToString(card.face).toLowerCase() + '">' + types.faceToSymbol(card.face) + '</div><div class="card-num card-face-top" data-face="' + types.faceToString(card.face).toLowerCase() + '">' + types.faceToSymbol(card.face) + '</div><div class="card-num card-face-bottom" data-face="' + types.faceToString(card.face).toLowerCase() + '">' + types.faceToSymbol(card.face) + '</div></div></div>';
 }
 
 /**
@@ -93,14 +93,12 @@ function pullCard(cardPull)
 
 /**
  * Requests to play a card from the server, if possible
- * TODO async card plays, starter card plays
+ * TODO starter card plays
  * @param evt
  */
 function playCard(evt)
 {
     console.log('play card: ', evt);
-    if (currentPlayer.cid !== socket.id) return;
-    console.log('I am the current');
     let domElem = $(evt.target);
     let chosenColor = null;
     if (! domElem.hasClass('card'))
@@ -110,15 +108,38 @@ function playCard(evt)
             chosenColor = domElem.data('color');
         }
         let parents = domElem.parents('.card');
-        if (parents.length === 0) return;
+        if (parents.length === 0)
+        {
+            console.error('Cannot find parent card object of ', domElem);
+            return;
+        }
         domElem = $(parents[0]);
     }
     $('.card-color-chooser').remove();
-    if (domElem.parents('.own-deck').length === 0) return;
-    console.log('Clicked own card');
+    if (domElem.parents('.own-deck').length === 0)
+    {
+        console.error("Cannot play someone else's card");
+        return;
+    }
     let card = {color: domElem.data('color'), face: domElem.data('face')};
-    if (! types.cardCanBePlayedOn(card, lastPlayedCard)) return;
-    console.log('Card can be played: ', card);
+    let asyncPlay = false;
+    if (currentPlayer.cid !== socket.id)
+    {
+        if (types.cardCanBeAsyncPlayedOn(card, lastPlayedCard))
+        {
+            asyncPlay = true;
+        }
+        else
+        {
+            console.error("Not current player and card cannot be async played: ", card, lastPlayedCard);
+            return;
+        }
+    }
+    if (! asyncPlay && ! types.cardCanBePlayedOn(card, lastPlayedCard))
+    {
+        console.error("Card cannot be played on top", card, lastPlayedCard);
+        return;
+    }
     if (types.hasChoosableColor(card))
     {
         if (chosenColor === null)
