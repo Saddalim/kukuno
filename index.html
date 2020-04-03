@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+    <title>Kupferschwanz GmbH UNO</title>
+    <style>
+
+    </style>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script type="text/javascript" src="types.js"></script>
+    <script type="text/javascript" src="client.js"></script>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div id="clientsBox">
+    <h4>Játékosok</h4>
+    <ul id="clientList"></ul>
+    <hr>
+    Neved: <input type="text" id="ownName" value="???"><a href="#" onclick="changeName()">Változtat</a>
+    <hr>
+</div>
+<div id="table">
+    <div id="mainDeck">
+        <div class="card card-secret" id="main-deck-card"><div class="card-inner"></div><div class="card-face-center">?</div><div class="card-face-top">?</div><div class="card-face-bottom">?</div><div class="deckSize">(<span id="deckSize"></span>)</div></div>
+    </div>
+    <div id="playedCards"></div>
+
+</div>
+<div id="decks"></div>
+<div id="logBox"></div>
+</body>
+</html>

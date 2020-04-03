@@ -1,0 +1,232 @@
+*
+{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body
+{
+    font-size: 13px;
+    font-family: "Helvetica", "Arial", sans-serif;
+}
+
+#clients
+{
+    list-style-type: none; margin: 0; padding: 0;
+}
+
+#clients li
+{
+    padding: 5px 10px;
+}
+
+#clients li:nth-child(odd)
+{
+    background: #eee;
+}
+
+#table
+{
+    background: #7a5131;
+    width: 100%;
+    height: 22rem;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-around;
+    align-content: center;
+    padding-top: 3rem;
+}
+
+#mainDeck
+{
+}
+
+.deckSize
+{
+    margin: 0 auto;
+    font-size: 1.5rem;
+}
+
+#playedCards
+{
+    position: relative;
+    width: 15rem;
+    height: 15rem;
+}
+
+#playedCards .card-container
+{
+    position: absolute;
+    left: 20%;
+    top: 5%;
+}
+
+.deck-cards .card-container
+{
+    display: inline-block;
+}
+
+.played-card
+{
+}
+
+.deck
+{
+    border: 4px solid #000;
+    padding: 5px;
+    background: #ccc;
+}
+
+.current-player
+{
+    border-color: #f00;
+}
+
+.card
+{
+    width: 4rem;
+    height: 6rem;
+    display: inline-block;
+    margin: 0.5rem;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: bold;
+    font-family: "Arial Black", "Arial", sans-serif;
+    border: 3px solid #fff;
+    border-radius: 0.5rem;
+    text-align: center;
+    position: relative;
+}
+
+.card-inner
+{
+    position: absolute;
+    top: 10%;
+    left: 15%;
+    width: 70%;
+    height: 80%;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0);
+    border: 0.35rem solid #fff;
+    transform: rotate(40deg);
+}
+
+.card-face-center, .card-face-top, .card-face-bottom
+{
+
+}
+
+.card-face-center
+{
+    margin: 40% auto 0 auto;
+    font-size: 2.5rem;
+    -webkit-text-stroke-width: 2px;
+    -webkit-text-stroke-color: #000;
+}
+
+.card-face-top
+{
+    position: absolute;
+    padding: 0.11rem;
+    left: 0;
+    top: 0;
+}
+
+.card-face-bottom
+{
+    position: absolute;
+    padding: 0.11rem;
+    right: 0;
+    bottom: 0;
+    transform: rotate(180deg);
+}
+
+.own-deck .card, #table .card
+{
+    width: 8rem;
+    height: 12rem;
+    border-width: 5px;
+}
+
+.card-face-top, .card-face-bottom
+{
+    font-size: 1.5rem;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: #000;
+}
+
+.own-deck .card, #table .card
+{
+    border-radius: 1rem !important;
+}
+
+.own-deck .card-inner, #table.card-inner
+{
+    border-width: 0.7rem;
+}
+
+.own-deck .card-face-top, #table .card-face-top, .own-deck .card-face-bottom, #table .card-face-bottom
+{
+    font-size: 2.5rem;
+    -webkit-text-stroke-width: 2px;
+}
+
+.own-deck .card-face-center, #table .card-face-center
+{
+    font-size: 5rem;
+    -webkit-text-stroke-width: 4px;
+}
+
+.own-deck .card-inner, #table .card-inner
+{
+    border-width: 0.7rem;
+}
+
+.card-black
+{
+    background: #000;
+}
+
+.card-red
+{
+    background: #C42038;
+}
+
+.card-green
+{
+    background: #3B9938;
+}
+
+.card-blue
+{
+    background: #0056A6;
+}
+
+.card-yellow
+{
+    background: #EFD332;
+}
+
+.card-secret
+{
+    background: #999;
+}
+
+@keyframes card-highlight
+{
+    0% {border-color: #fff;}
+    50% {border-color: #f88}
+    100% {border-color: #fff;}
+}
+
+.own-deck .card:hover, #mainDeck:hover
+{
+    cursor: pointer;
+    animation: card-highlight 0.8s infinite;
+}
+
+.own-deck.current-player
+{
+    animation: card-highlight 1s infinite;
+}
