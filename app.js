@@ -20,6 +20,11 @@ const secretCard = {color: types.COLOR.SECRET, face: types.FACE.SECRET};
 const defaultNamePrefix = "";
 const defaultNames = ["Vőféjkecske", "Holland Gáti Varánusz", "Kacsacsőrű Emlős", "Galléros Császárlégykapó", "Zanzibári Hómuflon", "Dél-argentin Zuzmóokapi", "Csíkostökű Sáskarák", "Mexikói Óriáscthulhu", "Elefántcsontparti Háromfaszú Nyúlantilop", "Arizoniai Péniszkobra", "Kaliforniai Vérhörcsög", "Üzbég Savköpő Menyét", "Irreverzibilis Vérpókmalac", "Rekurzív Medvedisznóember"];
 
+/**
+ * Shuffles the given array, effectively modifying it (not copying!)
+ * @param array Array to be shuffled
+ * @returns {*} The shuffled array
+ */
 var shuffle = function (array) {
 
     var currentIndex = array.length;
@@ -41,6 +46,10 @@ var shuffle = function (array) {
 
 };
 
+/**
+ * Generates a random, yet untaken name
+ * @returns {string} The name
+ */
 function getRandomName()
 {
     if (clients.length >= defaultNames.length) return "???";
@@ -51,6 +60,12 @@ function getRandomName()
     }
 }
 
+/**
+ * Renames the given client. Does not send update to clients!
+ * @param id ID of the client
+ * @param name New name of the client
+ * @returns {boolean} True, if client ID is known
+ */
 function renameClient(id, name)
 {
     for (var i = 0; i < clients.length; ++i)
@@ -63,6 +78,12 @@ function renameClient(id, name)
     }
     return false;
 }
+
+/**
+ * Finds a client and returns its object
+ * @param id ID of the client to look for
+ * @returns {null|*} The client, or null if not found
+ */
 function getClientWithId(id)
 {
     for (var i = 0; i < clients.length; ++i)
@@ -72,6 +93,11 @@ function getClientWithId(id)
     return null;
 }
 
+/**
+ * Remove a given client from the known clients. Does not send update to clients!
+ * @param id ID of the client to be disconnected
+ * @returns {null}
+ */
 function disconnectClientWithId(id)
 {
     var i = 0;
@@ -89,6 +115,9 @@ function disconnectClientWithId(id)
     return client;
 }
 
+/**
+ * Empties and fills up the pull deck with ALL available cards in a random order.
+ */
 function fillDeck()
 {
     gameState.deck = [];
@@ -121,6 +150,10 @@ function fillDeck()
     console.log("Deck filled with " + gameState.deck.length + " cards");
 }
 
+/**
+ * Removes and returns a random card from the pull deck
+ * @returns {*} The random card that is now not part of the pull deck
+ */
 function popRandomFromDeck()
 {
     const randomId = Math.floor(Math.random() * gameState.deck.length);
@@ -129,6 +162,10 @@ function popRandomFromDeck()
     return card;
 }
 
+/**
+ * Removes and returns the next (top) card from the pull deck
+ * @returns {*} The next (top) card that is now not part of the pull deck
+ */
 function popNextFromDeck()
 {
     var card = gameState.deck[0];
@@ -136,6 +173,11 @@ function popNextFromDeck()
     return card;
 }
 
+/**
+ * Emits a card pull event to all clients, effectively hiding card data for clients not the target of the pull action.
+ * @param cardPull Cardpull object, expecting a cid as the card recipient's ID, and a card{color, face} as the card
+ * @param recipients Array of clients the event shall be sent to.
+ */
 function hideAndEmitCardPull(cardPull, recipients)
 {
     recipients.forEach(client => {
@@ -143,11 +185,18 @@ function hideAndEmitCardPull(cardPull, recipients)
     });
 }
 
+/**
+ * Returns a copy of the array of active client data, from which sensitive data has been removed
+ * @returns {{name: *, id: *}[]}
+ */
 function getPublishableClientList()
 {
     return clients.map(client => ({id: client.id, name: client.name}));
 }
 
+/**
+ * Completely discards current game state, and starts a new
+ */
 function restartGame()
 {
     if (clients.length < 1) return;
@@ -186,6 +235,9 @@ function restartGame()
     advanceTurn();
 }
 
+/**
+ * Step onto the next player, and emit event to all clients
+ */
 function advanceTurn()
 {
     if (gameState.nextPlayerIdx === null && clients.length > 0) gameState.nextPlayerIdx = 0;
@@ -198,6 +250,14 @@ function advanceTurn()
     io.emit('current player', {cid: clients[gameState.nextPlayerIdx].id});
 }
 
+/**
+ * Finds whether the given card can be played from the given deck.
+ * If the same card exists more than once in the given deck, chooses the first
+ * Allows originally black card to be played as colored, in this case it removes the back card from the deck.
+ * @param card The card to look for
+ * @param deck The deck in which the card shall be looked for
+ * @returns {number | *} Index of the card in the deck. -1, if not found.
+ */
 function getPlayableCardIdxFromDeck(card, deck)
 {
     return deck.findIndex(
@@ -230,6 +290,9 @@ io.on('connection', function(socket)
     let isAdmin = socket.handshake.headers.referer.includes("/admin");
     console.log((isAdmin ? 'an admin connected' : 'a user connected'));
 
+    /**
+     * Disconnect event
+     */
     socket.on('disconnect', function()
     {
         console.log('user disconnected');
@@ -240,6 +303,9 @@ io.on('connection', function(socket)
         }
     });
 
+    /**
+     * 'Rename myself' event from a client
+     */
     socket.on('client rename', function(name)
     {
         console.log('Client rename: ' + name);
@@ -250,6 +316,10 @@ io.on('connection', function(socket)
         }
     });
 
+    /**
+     * A client tries to play a card given as {color, face}
+     * TODO async card plays, starter card plays
+     */
     socket.on('play card', function(cardToPlay) {
         console.log(cardToPlay);
         console.log('(' + socket.id + ') tries to play: ' + types.cardToString(cardToPlay));
@@ -270,6 +340,10 @@ io.on('connection', function(socket)
         advanceTurn();
     });
 
+    /**
+     * A client tries to draw a card from the pull deck
+     * TODO pull more than 1 card if a plus chain is ended this way
+     */
     socket.on('draw card', function() {
         console.log(socket.id + ' tries to draw a card');
         if (clients[gameState.nextPlayerIdx].id !== socket.id) return;
