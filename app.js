@@ -6,16 +6,19 @@ var io = require('socket.io')(http);
 var types = require('./public/types.js');
 
 var clients = [];
-var gameState = {
+
+const cardCnt = 7;
+const secretCard = {color: types.COLOR.SECRET, face: types.FACE.SECRET};
+const blankGameState = {
     nextPlayerIdx: null,
     decks: {},
     deck: [],
     playedCards: [],
-    turnDirection: 1
+    turnDirection: 1,
+    currentCardPullCnt: 0
 };
 
-const cardCnt = 7;
-const secretCard = {color: types.COLOR.SECRET, face: types.FACE.SECRET};
+var gameState = blankGameState;
 
 const defaultNamePrefix = "";
 const defaultNames = ["Vőféjkecske", "Holland Gáti Varánusz", "Kacsacsőrű Emlős", "Galléros Császárlégykapó", "Zanzibári Hómuflon", "Dél-argentin Zuzmóokapi", "Csíkostökű Sáskarák", "Mexikói Óriáscthulhu", "Elefántcsontparti Háromfaszú Nyúlantilop", "Arizoniai Péniszkobra", "Kaliforniai Vérhörcsög", "Üzbég Savköpő Menyét", "Irreverzibilis Vérpókmalac", "Rekurzív Medvedisznóember"];
@@ -58,6 +61,21 @@ function getRandomName()
         let nameToBe = defaultNamePrefix + defaultNames[Math.floor(Math.random() * defaultNames.length)];
         if (clients.findIndex(client => client.name === nameToBe) === -1) return nameToBe;
     }
+}
+
+/**
+ * Gets the name of the client with the given ID
+ * TODO make it more efficient
+ * @param cid
+ * @returns {string} The name, if client is known, "???" otherwise
+ */
+function getNameOfClient(cid)
+{
+    for (let clientIdx = 0; clientIdx < clients.length; ++clientIdx)
+    {
+        if (clients[clientIdx].id === cid) return clients[clientIdx].name;
+    }
+    return "???";
 }
 
 /**
@@ -152,6 +170,7 @@ function fillDeck()
 
 /**
  * Removes and returns a random card from the pull deck
+ * TODO reshuffle played cards if pull deck is empty
  * @returns {*} The random card that is now not part of the pull deck
  */
 function popRandomFromDeck()
@@ -164,6 +183,7 @@ function popRandomFromDeck()
 
 /**
  * Removes and returns the next (top) card from the pull deck
+ * TODO reshuffle played cards if pull deck is empty
  * @returns {*} The next (top) card that is now not part of the pull deck
  */
 function popNextFromDeck()
@@ -171,6 +191,16 @@ function popNextFromDeck()
     var card = gameState.deck[0];
     gameState.deck.splice(0, 1);
     return card;
+}
+
+/**
+ * Gets the last played card (that is on the top of the table)
+ * @returns {null|*} Null, if no cards on the played deck
+ */
+function getTopPlayedCard()
+{
+    if (gameState.playedCards.length === 0) return null;
+    return gameState.playedCards[gameState.playedCards.length - 1];
 }
 
 /**
@@ -183,6 +213,19 @@ function hideAndEmitCardPull(cardPull, recipients)
     recipients.forEach(client => {
         io.to(client.socket.id).emit('card pulled', {cid: cardPull.cid, card: (cardPull.cid === client.id ? cardPull.card : secretCard)});
     });
+}
+
+/**
+ * Adds the given card to the given client's deck, if that client exists.
+ * @param card The card to be given
+ * @param cid The ID of the client to whom it shall be added
+ * @returns {boolean} False, if client is unknown or doesn't have a deck
+ */
+function addCardToClient(card, cid)
+{
+    if (! gameState.decks.hasOwnProperty(cid)) return false;
+    gameState.decks[cid].push(card);
+    return true;
 }
 
 /**
@@ -204,13 +247,7 @@ function restartGame()
     console.log('Signalling restarted');
     io.emit('game restarted');
 
-    gameState = {
-        nextPlayerIdx: null,
-        decks: {},
-        deck: [],
-        playedCards: [],
-        turnDirection: 1
-    };
+    gameState = blankGameState;
     clients.forEach(client => gameState.decks[client.id] = []);
 
     console.log('Filling deck');
@@ -228,11 +265,11 @@ function restartGame()
     }
 
     gameState.playedCards.push(popNextFromDeck());
-    io.emit('card played', {cid: null, card: gameState.playedCards[0]});
+    io.emit('card played', {cid: null, card: getTopPlayedCard()});
 
+    gameState.nextPlayerIdx = Math.floor(Math.random() * clients.length);
+    io.emit('current player', {cid: clients[gameState.nextPlayerIdx].id});
     console.log('Ready with new game');
-
-    advanceTurn();
 }
 
 /**
@@ -243,8 +280,9 @@ function advanceTurn()
     if (gameState.nextPlayerIdx === null && clients.length > 0) gameState.nextPlayerIdx = 0;
     else
     {
-        ++gameState.nextPlayerIdx;
+        gameState.nextPlayerIdx += gameState.turnDirection;
         if (gameState.nextPlayerIdx >= clients.length) gameState.nextPlayerIdx = 0;
+        if (gameState.nextPlayerIdx < 0) gameState.nextPlayerIdx = clients.length;
     }
 
     io.emit('current player', {cid: clients[gameState.nextPlayerIdx].id});
@@ -264,11 +302,12 @@ function getPlayableCardIdxFromDeck(card, deck)
         cardInDeck => {
             if (card.face === cardInDeck.face)
             {
-                if (types.hasChoosableColor(card) && types.hasChoosableColor(cardInDeck))
+                // Black check necessary to filter if a black card is wanted to be played without coloring
+                if (card.color !== types.COLOR.BLACK && types.hasChoosableColor(cardInDeck))
                 {
                     return true;
                 }
-                return card.face === cardInDeck.face
+                return card.color === cardInDeck.color;
             }
         });
 }
@@ -321,21 +360,66 @@ io.on('connection', function(socket)
      * TODO async card plays, starter card plays
      */
     socket.on('play card', function(cardToPlay) {
-        console.log(cardToPlay);
-        console.log('(' + socket.id + ') tries to play: ' + types.cardToString(cardToPlay));
-        if (clients[gameState.nextPlayerIdx].id !== socket.id) return;
-        if (! gameState.decks.hasOwnProperty(socket.id)) return;
+
+        console.log(getNameOfClient(socket.id) + ' (' + socket.id + ') tries to play: ' + types.cardToString(cardToPlay));
+        if (clients[gameState.nextPlayerIdx].id !== socket.id)
+        {
+            console.log('But (s)he is not the current player :(');
+            return;
+        }
+        if (! gameState.decks.hasOwnProperty(socket.id))
+        {
+            console.log('But (s)he does not have a deck :(');
+            return;
+        }
+        let lastPlayedCard = getTopPlayedCard();
+        if (! types.cardCanBePlayedOn(cardToPlay, lastPlayedCard))
+        {
+            console.log('But the chosen card (' + types.cardToString(cardToPlay) + ') cannot be played on top of ' + types.cardToString(lastPlayedCard));
+            return;
+        }
+        if (gameState.currentCardPullCnt > 0 && cardToPlay.face !== types.FACE.PLUS2 && cardToPlay.face !== types.FACE.PLUS4)
+        {
+            console.log('But there are plus cards (' + gameState.currentCardPullCnt + ') waiting to be pulled');
+            return;
+        }
         let cardIdx = getPlayableCardIdxFromDeck(cardToPlay, gameState.decks[socket.id]);
-        if (cardIdx === -1) return;
-        if (! types.cardCanBePlayedOn(cardToPlay, gameState.playedCards[gameState.playedCards.length - 1])) return;
-        console.log('And (s)he can!');
+        if (cardIdx === -1)
+        {
+            console.log('But (s)he has no such card :( Available: ' + types.deckToString(gameState.decks[socket.id]));
+            return;
+        }
+
         let card = gameState.decks[socket.id][cardIdx];
+
         if (types.hasChoosableColor(card))
         {
+            console.log('This is a special ' + types.cardToString(card) + ' colored as ' + types.colorToString(cardToPlay.color));
             card.color = cardToPlay.color;
         }
+
+        console.log('And (s)he can!');
+
+        // Check for special cards
+        switch (card.face)
+        {
+            case types.FACE.TURNAROUND:
+                gameState.nextPlayerIdx *= -1;
+                break;
+            case types.FACE.PLUS2:
+                gameState.currentCardPullCnt += 2;
+                break;
+            case types.FACE.PLUS4:
+                gameState.currentCardPullCnt += 4;
+                break;
+            case types.FACE.DENY:
+                advanceTurn();
+                break;
+        }
+
         gameState.decks[socket.id].splice(cardIdx, 1);
         gameState.playedCards.push(card);
+
         io.emit('card played', {cid: socket.id, card: card});
         advanceTurn();
     });
@@ -348,9 +432,19 @@ io.on('connection', function(socket)
         console.log(socket.id + ' tries to draw a card');
         if (clients[gameState.nextPlayerIdx].id !== socket.id) return;
         if (! gameState.decks.hasOwnProperty(socket.id)) return;
-        let card = popNextFromDeck();
-        hideAndEmitCardPull({cid: socket.id, card: card}, clients);
-        console.log('And (s)he can!');
+
+        let pullCardCnt = Math.max(1, gameState.currentCardPullCnt);
+        console.log('And (s)he can and pulls ' + pullCardCnt + ' cards');
+
+        // Player decides to pull after plus cards
+        for (var i = 0; i < pullCardCnt; ++i)
+        {
+            let card = popNextFromDeck();
+            addCardToClient(card, socket.id);
+            hideAndEmitCardPull({cid: socket.id, card: card}, clients);
+        }
+        gameState.currentCardPullCnt = 0;
+
         advanceTurn();
     });
 

@@ -44,7 +44,7 @@ function createColorChooserOverlay()
  */
 function createCard(card)
 {
-    return '<div class="card-container"><div class="card card-' + (card.color === types.COLOR.SECRET ? 'secret' : types.colorToString(card.color).toLowerCase()) + ' card-' + (card.face === types.FACE.SECRET ? 'secret' : card.face) + '" data-color="' + card.color + '" data-face="' + card.face + '"><div class="card-inner"></div><div class="card-face-center">' + types.faceToString(card.face) + '</div><div class="card-face-top">' + types.faceToString(card.face) + '</div><div class="card-face-bottom">' + types.faceToString(card.face) + '</div></div></div>';
+    return '<div class="card-container"><div class="card card-' + (card.color === types.COLOR.SECRET ? 'secret' : types.colorToString(card.color).toLowerCase()) + ' card-' + (card.face === types.FACE.SECRET ? 'secret' : card.face) + '" data-color="' + card.color + '" data-face="' + card.face + '"><div class="card-inner"></div><div class="card-face-center">' + types.faceToSymbol(card.face) + '</div><div class="card-face-top">' + types.faceToSymbol(card.face) + '</div><div class="card-face-bottom">' + types.faceToSymbol(card.face) + '</div></div></div>';
 }
 
 /**
@@ -58,7 +58,7 @@ function setNewClientList(newClientList)
     var deckContainer = $('#decks');
     clientListDom.empty();
     newClientList.forEach(client => {
-        clientListDom.append($('<li>').text(client.name));
+        clientListDom.append($('<li>').text(client.name + ' (' + client.id + ')'));
 
         // Add deck for new clients
         let existingDom = $('#deck-name-' + client.id);
@@ -81,13 +81,11 @@ function setNewClientList(newClientList)
 }
 
 /**
- * Requests to pull a card from the server, if possible
+ * Handles a card pull event
  * @param cardPull
  */
 function pullCard(cardPull)
 {
-    console.log('pull card');
-    if (currentPlayer.cid !== socket.id) return;
     let cardElem = $(createCard(cardPull.card));
     $('#deck-cards-' + cardPull.cid).append(cardElem);
     cardElem.click(playCard);

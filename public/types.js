@@ -37,11 +37,11 @@
     };
 
     /**
-     * Transforms a given card face to a human readable string (e.g. for logging)
+     * Transforms a given card face to a short symbol (e.g. for display on cards)
      * @param face The card face
-     * @returns {string} The human readable string
+     * @returns {string} The short symbol
      */
-    exports.faceToString = function(face)
+    exports.faceToSymbol = function(face)
     {
         if (typeof face == 'number' && 0 <= face && face <= 9) return face.toString();
 
@@ -58,6 +58,27 @@
     };
 
     /**
+     * Transforms a given card face to a human readable string (e.g. for logging)
+     * @param face The card face
+     * @returns {string} The human readable string
+     */
+    exports.faceToString = function(face)
+    {
+        if (typeof face == 'number' && 0 <= face && face <= 9) return face.toString();
+
+        switch (face)
+        {
+            case this.FACE.SECRET: return "?";
+            case this.FACE.DENY: return 'Deny';
+            case this.FACE.TURNAROUND: return "Turnaround";
+            case this.FACE.PLUS2: return "+2";
+            case this.FACE.COLORSWITCH: return "Colorswitch";
+            case this.FACE.PLUS4: return "+4";
+        }
+        return "#";
+    };
+
+    /**
      * Transforms a given card to a human readable string (e.g. for logging)
      * @param card The card
      * @returns {string} The human readable string
@@ -65,6 +86,20 @@
     exports.cardToString = function(card)
     {
         return this.colorToString(card.color) + ' ' + this.faceToString(card.face);
+    };
+
+    /**
+     * Transforms a given deck of cards to a human readable string (e.g. for logging)
+     * @param deck The deck given as array of cards {color, face}
+     * @param delim Delimiter between cards, defaults to comma
+     * @returns {string} The human readable string
+     */
+    exports.deckToString = function(deck, delim = ', ')
+    {
+        let str = "[";
+        deck.forEach(card => str += (this.cardToString(card) + delim))
+        str = str.substring(0, str.length - delim.length);
+        return str + "]";
     };
 
     exports.CARD_CNT = 108;
@@ -78,10 +113,9 @@
      */
     exports.cardCanBePlayedOn = function(cardToBePlayed, cardOnTo)
     {
-        console.log("cardCanBePlayedOn", cardToBePlayed, cardOnTo);
         if (cardToBePlayed.face === this.FACE.PLUS4 || cardToBePlayed.face === this.FACE.COLORSWITCH) return true;
         return cardToBePlayed.color === this.COLOR.BLACK || cardToBePlayed.color === cardOnTo.color || cardToBePlayed.face === cardOnTo.face;
-    }
+    };
 
     /**
      * Checks whether the given card has a choosable (wildcard black) color
