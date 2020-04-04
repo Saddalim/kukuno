@@ -12,10 +12,8 @@ const secretCard = {color: types.COLOR.SECRET, face: types.FACE.SECRET};
 const blankGameState = {
     nextPlayerIdx: null,
     players: {},
-    decks: {},
     deck: [],
     playedCards: [],
-    saidUno: {},
     turnDirection: 1,
     currentCardPullCnt: 0
 };
