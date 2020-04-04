@@ -5,7 +5,6 @@
 - újrakeverés, ha elfogy a húzópakli
 - aki hamarabb rak, az kezd (mi van ha senki sem tud?)
 - aki hamarabb rak, az a második (mi van ha senki sem tud?)
-- nem mondta, hogy uno (külön észrevevés gomb kéne, úgy nagyobb poén)
 - race condition, async play card-nál 
 - csak szám lehessen valid kezdőlap
 
