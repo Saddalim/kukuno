@@ -6,8 +6,20 @@
 - aki hamarabb rak, az kezd (mi van ha senki sem tud?)
 - aki hamarabb rak, az a második (mi van ha senki sem tud?)
 - nem mondta, hogy uno (külön észrevevés gomb kéne, úgy nagyobb poén)
+- race condition, async play card-nál 
 
 bónusz:
 - cset
 - lehessen csalni 6/9-el, kéne valami gesture a lerakott kártyán a lefülelésre
 - kamu uno-bemondás
+
+Possible features
+- kicsit eltolni a kártyát letevéskor
+- asztalhoz normális háttér (textúra)
+- hány lap van, elfedni (esetleg ha több mint 10 ugyanaz nem kell több)
+- design ne legyen ovális mögött a kártyán
+- te jössz szeben jelezve
+- lehet bill-ről is játszani (jobbra-balra , space)
+
+
+

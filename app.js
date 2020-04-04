@@ -433,7 +433,7 @@ io.on('connection', function(socket)
             console.log('But (s)he does not have a deck :(');
             return;
         }
-        if (! asyncPlay && ! types.cardCanBePlayedOn(cardToPlay, lastPlayedCard) && ! asyncPlayPossible)
+        if (! asyncPlay && ! types.cardCanBePlayedOn(cardToPlay, lastPlayedCard))
         {
             console.log('But the chosen card (' + types.cardToString(cardToPlay) + ') cannot be played on top of ' + types.cardToString(lastPlayedCard));
             return;
@@ -510,7 +510,6 @@ io.on('connection', function(socket)
 
     /**
      * A client tries to draw a card from the pull deck
-     * TODO pull more than 1 card if a plus chain is ended this way
      */
     socket.on('draw card', function() {
         console.log(socket.id + ' tries to draw a card');
