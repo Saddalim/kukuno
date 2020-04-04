@@ -21,5 +21,9 @@ Possible features
 - te jössz szeben jelezve
 - lehet bill-ről is játszani (jobbra-balra , space)
 
+Done:
+ - kezdő lapok száma változik 4 és 7 között
+ 
+
 
 
