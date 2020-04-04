@@ -379,6 +379,7 @@ function advanceTurn(depth = 0)
         playerData.state = types.PLAYER_STATE.OUT;
         console.log(getNameOfClient(clients[gameState.nextPlayerIdx].id) + " (" + clients[gameState.nextPlayerIdx].id + ") is out!");
         io.emit('player out', playerData.id);
+        advanceTurn(depth + 1);
     }
     else
     {
@@ -571,14 +572,22 @@ io.on('connection', function(socket)
      */
     socket.on('draw card', function() {
         console.log(getNameOfClient(socket.id) + " (" + socket.id + ') tries to draw a card');
-        if (clients[gameState.nextPlayerIdx].id !== socket.id) return;
-        if (! gameState.players.hasOwnProperty(socket.id)) return;
+        if (clients[gameState.nextPlayerIdx].id !== socket.id)
+        {
+            console.log("But (s)he's not the current player!");
+            return;
+        }
+        if (! gameState.players.hasOwnProperty(socket.id))
+        {
+            console.log("But (s)he doesn't have a deck");
+            return;
+        }
 
         // Drawing a card discards said UNO
         gameState.players[socket.id].state = types.PLAYER_STATE.PLAYING;
 
         let pullCardCnt = Math.max(1, gameState.currentCardPullCnt);
-        console.log('And (s)he can and pulls ' + pullCardCnt + ' cards');
+        console.log('And (s)he can and pulls ' + pullCardCnt + ' card(s)');
 
         // Player decides to pull after plus cards
         for (var i = 0; i < pullCardCnt; ++i)

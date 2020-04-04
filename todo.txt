@@ -6,6 +6,7 @@
 - aki hamarabb rak, az a második (mi van ha senki sem tud?)
 - race condition, async play card-nál 
 - csak szám lehessen valid kezdőlap
+- kiment emberrel ne lehessen cserélni
 
 bónusz:
 - cset
