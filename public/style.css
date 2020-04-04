@@ -310,3 +310,8 @@ body
 {
     animation: card-highlight 1s infinite;
 }
+
+.toggled
+{
+    background: #0f0;
+}

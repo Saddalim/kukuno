@@ -7,7 +7,9 @@ var types = require('./public/types.js');
 
 var clients = [];
 
-const cardCnt = 7;
+const startCardCnt = 7;
+const missedUnoCardCnt = 3;
+
 const secretCard = {color: types.COLOR.SECRET, face: types.FACE.SECRET};
 const blankGameState = {
     nextPlayerIdx: null,
@@ -20,7 +22,7 @@ const blankGameState = {
 const blankPlayerState = {
     state: types.PLAYER_STATE.PLAYING,
     deck: []
-}
+};
 
 var gameState = blankGameState;
 
@@ -270,6 +272,17 @@ function addCardToClient(card, cid)
 }
 
 /**
+ * Pulls a card from the deck to the given player's deck, and broadcasts the event to all clients
+ * @param cid ID of the client the card shall go to
+ */
+function pullAndAddCardToClient(cid)
+{
+    let card = popNextFromDeck();
+    addCardToClient(card, cid);
+    hideAndEmitCardPull({cid: cid, card: card}, clients);
+}
+
+/**
  * Returns a copy of the array of active client data, from which sensitive data has been removed
  * @returns {{name: *, id: *}[]}
  */
@@ -300,7 +313,7 @@ function restartGame()
 
     console.log('Distributing cards');
 
-    for (var i = 0; i < cardCnt; ++i)
+    for (var i = 0; i < startCardCnt; ++i)
     {
         clients.forEach(client => {
             let card = popNextFromDeck();
@@ -336,18 +349,34 @@ function advanceTurn(depth = 0)
         return;
     }
 
+    if (depth === 0)
+    {
+        console.log("Advance turn, curr idx: " + gameState.nextPlayerIdx + ", direction: ", gameState.turnDirection);
+    }
+
     if (gameState.nextPlayerIdx === null && clients.length > 0) gameState.nextPlayerIdx = 0;
     else
     {
         gameState.nextPlayerIdx += gameState.turnDirection;
         if (gameState.nextPlayerIdx >= clients.length) gameState.nextPlayerIdx = 0;
-        if (gameState.nextPlayerIdx < 0) gameState.nextPlayerIdx = clients.length;
+        if (gameState.nextPlayerIdx < 0) gameState.nextPlayerIdx = clients.length - 1;
     }
 
     // Skip players with no cards remaining
-    if (gameState.players[clients[gameState.nextPlayerIdx].id].deck.length === 0)
+    if (! clients.hasOwnProperty(gameState.nextPlayerIdx))
+    {
+        console.log("Will crash, next Idx: " + gameState.nextPlayerIdx + ", client cnt: " + clients.length);
+    }
+    let playerData = gameState.players[clients[gameState.nextPlayerIdx].id];
+    if (playerData.state === types.PLAYER_STATE.OUT)
     {
         advanceTurn(depth + 1);
+    }
+    else if (gameState.currentCardPullCnt === 0 && (playerData.state === types.PLAYER_STATE.CALLBACKABLE || playerData.state === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO))
+    {
+        playerData.state = types.PLAYER_STATE.OUT;
+        console.log(getNameOfClient(clients[gameState.nextPlayerIdx].id) + " (" + clients[gameState.nextPlayerIdx].id + ") is out!");
+        io.emit('player out', playerData.id);
     }
     else
     {
@@ -394,14 +423,14 @@ app.get('/admin', function(req, res)
 io.on('connection', function(socket)
 {
     let isAdmin = socket.handshake.headers.referer.includes("/admin");
-    console.log((isAdmin ? 'an admin connected' : 'a user connected'));
+    console.log((isAdmin ? 'an admin' : 'a user') + ' has connected');
 
     /**
      * Disconnect event
      */
     socket.on('disconnect', function()
     {
-        console.log('user disconnected');
+        console.log('user has disconnected');
         var client = disconnectClientWithId(socket.id);
         if (client != null)
         {
@@ -518,7 +547,18 @@ io.on('connection', function(socket)
             let temp = gameState.players[socket.id].deck;
             gameState.players[socket.id].deck = gameState.players[cardToPlay.cid].deck;
             gameState.players[cardToPlay.cid].deck = temp;
+
+            // Swapping decks discards UNOs said earlier!
+            gameState.players[socket.id].state = types.PLAYER_STATE.PLAYING;
+            gameState.players[cardToPlay.cid].state = types.PLAYER_STATE.PLAYING;
+
             hideAndEmitDeckSwap({deck1: {cid: socket.id, deck: gameState.players[socket.id].deck}, deck2: {cid: cardToPlay.cid, deck: gameState.players[cardToPlay.cid].deck}}, clients);
+        }
+
+        // Check for out of cards
+        if ( gameState.players[socket.id].deck.length === 0)
+        {
+            gameState.players[socket.id].state = (gameState.players[socket.id].state === types.PLAYER_STATE.SAID_UNO ? types.PLAYER_STATE.CALLBACKABLE_SAID_UNO : types.PLAYER_STATE.CALLBACKABLE);
         }
 
         advanceTurn();
@@ -528,9 +568,12 @@ io.on('connection', function(socket)
      * A client tries to draw a card from the pull deck
      */
     socket.on('draw card', function() {
-        console.log(socket.id + ' tries to draw a card');
+        console.log(getNameOfClient(socket.id) + " (" + socket.id + ') tries to draw a card');
         if (clients[gameState.nextPlayerIdx].id !== socket.id) return;
         if (! gameState.players.hasOwnProperty(socket.id)) return;
+
+        // Drawing a card discards said UNO
+        gameState.players[socket.id].state = types.PLAYER_STATE.PLAYING;
 
         let pullCardCnt = Math.max(1, gameState.currentCardPullCnt);
         console.log('And (s)he can and pulls ' + pullCardCnt + ' cards');
@@ -538,13 +581,43 @@ io.on('connection', function(socket)
         // Player decides to pull after plus cards
         for (var i = 0; i < pullCardCnt; ++i)
         {
-            let card = popNextFromDeck();
-            addCardToClient(card, socket.id);
-            hideAndEmitCardPull({cid: socket.id, card: card}, clients);
+            pullAndAddCardToClient(socket.id);
         }
         gameState.currentCardPullCnt = 0;
 
         advanceTurn();
+    });
+
+    socket.on('say uno', function()
+    {
+        console.log(getNameOfClient(socket.id) + " (" + socket.id + ") tries to say uno");
+        if (! gameState.players.hasOwnProperty(socket.id))
+        {
+            console.log("But doesn't have a deck");
+            return;
+        }
+        let playerData = gameState.players[socket.id];
+        if (playerData.deck.length > types.UNO_MAX_CARD_CNT)
+        {
+            console.log("But has more than " + types.UNO_MAX_CARD_CNT + " card(s)");
+            return;
+        }
+        if (playerData.state === types.PLAYER_STATE.SAID_UNO || playerData.state === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO)
+        {
+            console.log("But has already said UNO");
+            return;
+        }
+        if (playerData.state === types.PLAYER_STATE.OUT)
+        {
+            console.log("But player is already out");
+            return;
+        }
+
+        console.log("And (s)he can!");
+
+        if (playerData.state === types.PLAYER_STATE.PLAYING) playerData.state = types.PLAYER_STATE.SAID_UNO;
+        else if (playerData.state === types.PLAYER_STATE.CALLBACKABLE) playerData.state = types.PLAYER_STATE.CALLBACKABLE_SAID_UNO;
+        io.emit('said uno', socket.id);
     });
 
     /**
@@ -552,10 +625,15 @@ io.on('connection', function(socket)
      */
     socket.on('report missed uno', function(reportedCid)
     {
-        console.log(getNameOfClient(socket.id) + "(" + socket.id + ") tries to report that " + getNameOfClient(reportedCid) + "(" + reportedCid + ") has forgot to say UNO");
+        console.log(getNameOfClient(socket.id) + " (" + socket.id + ") tries to report that " + getNameOfClient(reportedCid) + " (" + reportedCid + ") has forgot to say UNO");
         if (!gameState.players.hasOwnProperty(reportedCid))
         {
             console.log("But target player doesn't have a deck");
+            return;
+        }
+        if (gameState.players[reportedCid].state === types.PLAYER_STATE.OUT)
+        {
+            console.log("But target player is already out");
             return;
         }
         if (gameState.players[reportedCid].deck.length > 1)
@@ -563,7 +641,19 @@ io.on('connection', function(socket)
             console.log("But target deck has more than 1 card");
             return;
         }
+        if (gameState.players[reportedCid].state === types.PLAYER_STATE.SAID_UNO || gameState.players[reportedCid].state === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO)
+        {
+            console.log("But target player has already said UNO");
+            return;
+        }
 
+        console.log("And (s)he is right! Punishment awaits " + getNameOfClient(reportedCid) + " (" + reportedCid + ")");
+
+        gameState.players[reportedCid].state = types.PLAYER_STATE.PLAYING;
+        for (let i = 0; i < missedUnoCardCnt; ++i)
+        {
+            pullAndAddCardToClient(reportedCid);
+        }
     });
 
     if (isAdmin)

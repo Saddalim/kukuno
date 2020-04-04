@@ -3,11 +3,27 @@ var deckSize = 0;
 var currentPlayer = {cid: null};
 var cardPendingPlayed = null;
 var lastPlayedCard = null;
+var willSayUnoOnNextCard = false;
 var clients = [];
 
 function log(text)
 {
     $('#logBox').text(text);
+}
+
+/**
+ * Gets the name of the client with the given ID
+ * TODO make it more efficient
+ * @param cid
+ * @returns {string} The name, if client is known, "???" otherwise
+ */
+function getNameOfClient(cid)
+{
+    for (let clientIdx = 0; clientIdx < clients.length; ++clientIdx)
+    {
+        if (clients[clientIdx].id === cid) return clients[clientIdx].name;
+    }
+    return "???";
 }
 
 /**
@@ -25,7 +41,7 @@ function changeName()
  */
 function createDeck(client)
 {
-    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + '</span> - <a href="#" class="uno-report-btn" id="uno-report-' + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a><div class="deck-cards" id="deck-cards-' + client.id + '"></div></div>';
+    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + '</span> - ' + (client.id === socket.id ? '<button class="say-uno-btn" id="say-uno-' + client.id + '" disabled>UNO!</button>' : '<a href="#" class="uno-report-btn" id="uno-report-' + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a>') + '<div class="deck-cards" id="deck-cards-' + client.id + '"></div></div>';
 }
 
 /**
@@ -66,6 +82,39 @@ function createCard(card)
 }
 
 /**
+ * Gets the number of own cards
+ * @returns {number}
+ */
+function getOwnCardCnt()
+{
+    return $($('.own-deck')[0]).find('.card').length;
+}
+
+/**
+ * Sends UNO shout to server, if necessary
+ */
+function sayUno()
+{
+    let ownCardCnt = getOwnCardCnt();
+    if (ownCardCnt > types.UNO_MAX_CARD_CNT)
+    {
+        console.error("No point to say UNO with more than " + types.UNO_MAX_CARD_CNT + " cards");
+        return;
+    }
+    // Pre-click UNO
+    if (ownCardCnt === 2)
+    {
+        willSayUnoOnNextCard = true;
+        $('#say-uno-' + socket.id).addClass("toggled");
+    }
+    else
+    {
+        $('#say-uno-' + socket.id).removeClass("toggled");
+        socket.emit('say uno');
+    }
+}
+
+/**
  * Sends report missed UNO of another client to the server
  * @param cid ID of the client who is suspected to have forgotten to say UNO
  */
@@ -98,6 +147,10 @@ function setNewClientList(newClientList)
         {
             let newDeck = $(createDeck(client));
             deckContainer.append(newDeck);
+            newDeck.find('.say-uno-btn').click(function(evt)
+            {
+                sayUno();
+            });
             newDeck.find('.uno-report-btn').click(function (evt)
             {
                 reportMissedUno($(evt.target).data('cid'));
@@ -219,6 +272,13 @@ function playCard(evt)
     }
 
     cardPendingPlayed = domElem;
+
+    if (willSayUnoOnNextCard)
+    {
+        socket.emit('say uno');
+        willSayUnoOnNextCard = false;
+        $('#say-uno-' + socket.id).removeClass("toggled");
+    }
     socket.emit('play card', card);
 
 }
@@ -242,6 +302,7 @@ $(function () {
         pullCard(cardPull);
         --deckSize;
         $('#deckSize').text(deckSize);
+        $('#deck-' + cardPull.cid).removeClass('said-uno');
     });
 
     /**
@@ -265,6 +326,20 @@ $(function () {
         currentPlayer = client;
         $('.deck').removeClass('current-player');
         $('#deck-' + client.cid).addClass('current-player');
+
+        willSayUnoOnNextCard = false;
+        $('#say-uno-' + socket.id).removeClass("toggled");
+
+        let ownCardCnt = getOwnCardCnt();
+        console.log(ownCardCnt, currentPlayer.cid === socket.id);
+        if (ownCardCnt === 1 || (ownCardCnt === 2 && currentPlayer.cid === socket.id))
+        {
+            $('#say-uno-' + socket.id).prop('disabled', false);
+        }
+        else
+        {
+            $('#say-uno-' + socket.id).prop('disabled', true);
+        }
     });
 
     /**
@@ -292,6 +367,9 @@ $(function () {
         }
     });
 
+    /**
+     * Two clients swapped their decks
+     */
     socket.on('deck swap', function(data)
     {
         console.log('deck swap', data);
@@ -299,6 +377,15 @@ $(function () {
         $('#deck-cards-' + data.deck2.cid).empty();
         data.deck1.deck.forEach(card => pullCard({cid: data.deck1.cid, card: card}));
         data.deck2.deck.forEach(card => pullCard({cid: data.deck2.cid, card: card}));
+    });
+
+    /**
+     * A client has validly said UNO
+     */
+    socket.on('said uno', function(cid)
+    {
+        log(getNameOfClient(cid) + " said UNO!");
+        $('#deck-' + cid).addClass('said-uno');
     });
 
     /**
@@ -313,7 +400,7 @@ $(function () {
 
     $('#mainDeck').click(function(evt)
     {
-        console.log('draw card:');
+        console.log('draw card');
         if (currentPlayer.cid !== socket.id) return;
         socket.emit('draw card');
     });

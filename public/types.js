@@ -103,12 +103,14 @@
     };
 
     exports.CARD_CNT = 108;
+    exports.UNO_MAX_CARD_CNT = 2;
 
     exports.PLAYER_STATE = {
         PLAYING: 1,
         SAID_UNO: 2,
         CALLBACKABLE: 3,
-        OUT: 4
+        CALLBACKABLE_SAID_UNO: 4,
+        OUT: 5
     };
 
     /**
