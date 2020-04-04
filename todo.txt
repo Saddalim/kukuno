@@ -23,6 +23,7 @@ Possible features
 
 Done:
  - kezdő lapok száma változik 4 és 7 között
+ - letett lapok pakli, nem csak rotál de kicst el is tol
  
 
 

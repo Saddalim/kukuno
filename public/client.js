@@ -349,7 +349,8 @@ $(function () {
     {
         console.log('card played', event);
         let newCardDom = $(createCard(event.card));
-        newCardDom.css('transform', 'rotate(' + Math.floor(Math.random() * 360) + 'deg)').children('.card').addClass('played-card');
+        newCardDom.css('transform','rotate(' + Math.floor(Math.random() * 360) + 'deg) translate('+ Math.floor(Math.random() * 25) + 'px, '+ Math.floor(Math.random() * 25) + 'px)')
+        		.children('.card').addClass('played-card');
         $('#playedCards').append(newCardDom);
         lastPlayedCard = event.card;
         if (event.cid === null) return;
