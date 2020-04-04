@@ -7,7 +7,6 @@ var types = require('./public/types.js');
 
 var clients = [];
 
-const startCardCnt = 7;
 const missedUnoCardCnt = 3;
 
 const secretCard = {color: types.COLOR.SECRET, face: types.FACE.SECRET};
@@ -313,6 +312,9 @@ function restartGame()
 
     console.log('Distributing cards');
 
+    var startCardCnt = 4 + Math.floor(Math.random() * 4);  //from 4 to 7
+    console.log('Starting card count is ' + startCardCnt);
+    
     for (var i = 0; i < startCardCnt; ++i)
     {
         clients.forEach(client => {
