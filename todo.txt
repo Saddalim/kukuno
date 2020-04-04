@@ -1,0 +1,13 @@
+- kimaradszra csak ugyanolyan kimaradszot lehet rátenni, pedig a következő ember bármilyen rátehet async
+- 0 mint utolsó kártya csere
+- visszahívás / kimenők jelzése
+- játék vége
+- újrakeverés, ha elfogy a húzópakli
+- aki hamarabb rak, az kezd (mi van ha senki sem tud?)
+- aki hamarabb rak, az a második (mi van ha senki sem tud?)
+- nem mondta, hogy uno (külön észrevevés gomb kéne, úgy nagyobb poén)
+
+bónusz:
+- cset
+- lehessen csalni 6/9-el, kéne valami gesture a lerakott kártyán a lefülelésre
+- kamu uno-bemondás

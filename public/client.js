@@ -34,7 +34,25 @@ function createDeck(client)
  */
 function createColorChooserOverlay()
 {
-    return '<div class="card-color-chooser card-color-chooser-red" data-color="' + types.COLOR.RED + '"></div><div class="card-color-chooser card-color-chooser-green" data-color="' + types.COLOR.GREEN + '"></div><div class="card-color-chooser card-color-chooser-blue" data-color="' + types.COLOR.BLUE + '"></div><div class="card-color-chooser card-color-chooser-yellow" data-color="' + types.COLOR.YELLOW + '"></div>';
+    return '<div class="card-overlay card-color-chooser card-color-chooser-red" data-color="' + types.COLOR.RED + '"></div><div class="card-overlay card-color-chooser card-color-chooser-green" data-color="' + types.COLOR.GREEN + '"></div><div class="card-overlay card-color-chooser card-color-chooser-blue" data-color="' + types.COLOR.BLUE + '"></div><div class="card-overlay card-color-chooser card-color-chooser-yellow" data-color="' + types.COLOR.YELLOW + '"></div>';
+}
+
+/**
+ * Creates a HTML DOM element string representing a deck chooser overlay for 0 cards
+ * @returns {string}
+ */
+function createDeckChooserOverlay()
+{
+    return '<div class="card-overlay card-deck-chooser">Kivel?</div>';
+}
+
+/**
+ * Creates a HTML DOM element string representing an overlay for decks when choosing replacement deck with 0 card
+ * @returns {string}
+ */
+function createDeckChosantOverlay()
+{
+    return '<div class="card-overlay deck-chooser-overlay"></div>';
 }
 
 /**
@@ -115,7 +133,9 @@ function playCard(evt)
         }
         domElem = $(parents[0]);
     }
-    $('.card-color-chooser').remove();
+
+    $('.card-overlay').remove();
+
     if (domElem.parents('.own-deck').length === 0)
     {
         console.error("Cannot play someone else's card");
@@ -140,6 +160,8 @@ function playCard(evt)
         console.error("Card cannot be played on top", card, lastPlayedCard);
         return;
     }
+
+    // Handle black color chooser overlay
     if (types.hasChoosableColor(card))
     {
         if (chosenColor === null)
@@ -152,6 +174,28 @@ function playCard(evt)
             card.color = chosenColor;
         }
     }
+
+    // Handle 0 deck chooser overlay
+    if (card.face === 0)
+    {
+        domElem.append(createDeckChooserOverlay());
+        $('.deck:not(.own-deck)').append(createDeckChosantOverlay());
+        $('.deck-chooser-overlay').click(function(evt) {
+            let domElem = $(evt.target);
+            let parents = domElem.parents('.deck');
+            if (parents.length < 1)
+            {
+                console.error("Could not find parent deck of overlay", domElem);
+                return;
+            }
+            let deckDom = $(parents[0]);
+            $('.card-overlay').remove();
+            card.cid = deckDom.data('cid');
+            socket.emit('play card', card);
+        });
+        return;
+    }
+
     cardPendingPlayed = domElem;
     socket.emit('play card', card);
 
@@ -161,16 +205,17 @@ $(function () {
     /**
      * New client list msg
      */
-    socket.on('client list', function(clientList) {
-        console.log("New client list");
-        console.log(clientList);
+    socket.on('client list', function(clientList)
+    {
+        console.log('client list', clientList);
         setNewClientList(clientList);
     });
 
     /**
      * Someone pulled a card from the pull deck
      */
-    socket.on('card pulled', function(cardPull) {
+    socket.on('card pulled', function(cardPull)
+    {
         console.log('card pulled', cardPull);
         pullCard(cardPull);
         --deckSize;
@@ -180,7 +225,8 @@ $(function () {
     /**
      * Game completely restarted
      */
-    socket.on('game restarted', function() {
+    socket.on('game restarted', function()
+    {
         console.log('game restarted');
         $('.card:not(#main-deck-card)').remove();
         $('#playedCards').empty();
@@ -191,7 +237,8 @@ $(function () {
     /**
      * Current player changed (turn advanced) to given player as {cid}
      */
-    socket.on('current player', function(client) {
+    socket.on('current player', function(client)
+    {
         console.log('current player', client);
         currentPlayer = client;
         $('.deck').removeClass('current-player');
@@ -201,7 +248,8 @@ $(function () {
     /**
      * Someone legally played a card from his/her deck. Given as {cid, card{color, face}}
      */
-    socket.on('card played', function(event) {
+    socket.on('card played', function(event)
+    {
         console.log('card played', event);
         let newCardDom = $(createCard(event.card));
         newCardDom.css('transform', 'rotate(' + Math.floor(Math.random() * 360) + 'deg)').children('.card').addClass('played-card');
@@ -222,16 +270,27 @@ $(function () {
         }
     });
 
+    socket.on('deck swap', function(data)
+    {
+        console.log('deck swap', data);
+        $('#deck-cards-' + data.deck1.cid).empty();
+        $('#deck-cards-' + data.deck2.cid).empty();
+        data.deck1.deck.forEach(card => pullCard({cid: data.deck1.cid, card: card}));
+        data.deck2.deck.forEach(card => pullCard({cid: data.deck2.cid, card: card}));
+    });
+
     /**
      * Log message from the server to be displayed
      */
-    socket.on('log', function(msg) {
+    socket.on('log', function(msg)
+    {
         log(msg);
     });
 
     $('#deckSize').text(deckSize);
 
-    $('#mainDeck').click(function(evt) {
+    $('#mainDeck').click(function(evt)
+    {
         console.log('draw card:');
         if (currentPlayer.cid !== socket.id) return;
         socket.emit('draw card');

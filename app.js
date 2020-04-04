@@ -218,7 +218,7 @@ function getTopPlayedCard()
 }
 
 /**
- * Emits a card pull event to all clients, effectively hiding card data for clients not the target of the pull action.
+ * Emits a card pull event to all clients, effectively hiding card data from clients not the target of the pull action.
  * @param cardPull Cardpull object, expecting a cid as the card recipient's ID, and a card{color, face} as the card
  * @param recipients Array of clients the event shall be sent to.
  */
@@ -226,6 +226,29 @@ function hideAndEmitCardPull(cardPull, recipients)
 {
     recipients.forEach(client => {
         io.to(client.socket.id).emit('card pulled', {cid: cardPull.cid, card: (cardPull.cid === client.id ? cardPull.card : secretCard)});
+    });
+}
+
+/**
+ * Emits a deck swap event to all clients, effectively hiding card data from other clients
+ * @param deckSwap DeckSwap object, expecting deck1 and deck2, each a {cid, [card{color, face}]} object
+ * @param recipients Array of clients the event shall be sent to.
+ */
+function hideAndEmitDeckSwap(deckSwap, recipients)
+{
+    recipients.forEach(client => {
+        let actDeckSwap = JSON.parse(JSON.stringify(deckSwap)); // deep copy JS-style, fkyeah :)
+        if (client.socket.id !== actDeckSwap.deck1.cid)
+        {
+            console.log("Hiding swap deck 1 of " + actDeckSwap.deck1.cid + " from " + client.socket.id);
+            actDeckSwap.deck1.deck = Array(deckSwap.deck1.deck.length).fill({color: types.COLOR.SECRET, face: types.FACE.SECRET});
+        }
+        if (client.socket.id !== actDeckSwap.deck2.cid)
+        {
+            console.log("Hiding swap deck 2 of " + actDeckSwap.deck2.cid + " from " + client.socket.id);
+            actDeckSwap.deck2.deck = Array(deckSwap.deck2.deck.length).fill({color: types.COLOR.SECRET, face: types.FACE.SECRET});
+        }
+        io.to(client.socket.id).emit('deck swap', actDeckSwap);
     });
 }
 
@@ -450,6 +473,9 @@ io.on('connection', function(socket)
 
         console.log('And (s)he can!' + (asyncPlay ? ' Async play!' : ''));
 
+        gameState.decks[socket.id].splice(cardIdx, 1);
+        gameState.playedCards.push(card);
+
         // Check for special cards
         switch (card.face)
         {
@@ -467,10 +493,18 @@ io.on('connection', function(socket)
                 break;
         }
 
-        gameState.decks[socket.id].splice(cardIdx, 1);
-        gameState.playedCards.push(card);
-
         io.emit('card played', {cid: socket.id, card: card});
+
+        // Emit the swap event after card play event, so it is clear who played the 0 and from which deck
+        if (card.face === 0)
+        {
+            console.log(getNameOfClient(socket.id) + ' wants to change decks with ' + getNameOfClient(cardToPlay.cid));
+            let temp = gameState.decks[socket.id];
+            gameState.decks[socket.id] = gameState.decks[cardToPlay.cid];
+            gameState.decks[cardToPlay.cid] = temp;
+            hideAndEmitDeckSwap({deck1: {cid: socket.id, deck: gameState.decks[socket.id]}, deck2: {cid: cardToPlay.cid, deck: gameState.decks[cardToPlay.cid]}}, clients);
+        }
+
         advanceTurn();
     });
 
