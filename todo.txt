@@ -6,6 +6,7 @@
 - aki hamarabb rak, az kezd (mi van ha senki sem tud?)
 - aki hamarabb rak, az a második (mi van ha senki sem tud?)
 - nem mondta, hogy uno (külön észrevevés gomb kéne, úgy nagyobb poén)
+- csak szám lehessen valid kezdőlap
 
 bónusz:
 - cset
