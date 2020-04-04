@@ -384,8 +384,23 @@ $(function () {
      */
     socket.on('said uno', function(cid)
     {
-        log(getNameOfClient(cid) + " said UNO!");
+        log(getNameOfClient(cid) + " azt mondta UNO!");
         $('#deck-' + cid).addClass('said-uno');
+    });
+
+    socket.on('player out', function(cid)
+    {
+        log(getNameOfClient(cid) + " kiment!");
+    });
+
+    /**
+     * Pull deck has been reshuffled from the previously played cards
+     */
+    socket.on('deck reshuffled', function()
+    {
+        let previouslyPlayedCards = $('#playedCards').children().not(':last');
+        $('#deckSize').text(previouslyPlayedCards.length);
+        previouslyPlayedCards.remove();
     });
 
     /**

@@ -587,6 +587,17 @@ io.on('connection', function(socket)
         }
         gameState.currentCardPullCnt = 0;
 
+        // Reshuffle deck if empty
+        if (gameState.deck.length === 0)
+        {
+            let cards = gameState.playedCards.splice(0, gameState.playedCards.length - 1);
+            // Cannot simply put back, black cards need to be renewed as black :)
+            cards.forEach(card => {if (card.face === types.FACE.PLUS4 || card.face === types.FACE.COLORSWITCH) card.color = types.COLOR.BLACK});
+            gameState.deck = cards;
+            shuffle(gameState.deck);
+            io.emit('deck reshuffled');
+        }
+
         advanceTurn();
     });
 

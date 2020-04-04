@@ -2,7 +2,6 @@
 - 0 mint utolsó kártya csere
 - visszahívás / kimenők jelzése
 - játék vége
-- újrakeverés, ha elfogy a húzópakli
 - aki hamarabb rak, az kezd (mi van ha senki sem tud?)
 - aki hamarabb rak, az a második (mi van ha senki sem tud?)
 - race condition, async play card-nál 
