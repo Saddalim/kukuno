@@ -6,24 +6,22 @@
 - aki hamarabb rak, az a második (mi van ha senki sem tud?)
 - race condition, async play card-nál 
 - csak szám lehessen valid kezdőlap
-- kiment emberrel ne lehessen cserélni
-
-bónusz:
-- cset
-- lehessen csalni 6/9-el, kéne valami gesture a lerakott kártyán a lefülelésre
-- kamu uno-bemondás
-
-Possible features
-- kicsit eltolni a kártyát letevéskor
+- kiment emberrel ne lehessen cserélni - bug
 - asztalhoz normális háttér (textúra)
 - hány lap van, elfedni (esetleg ha több mint 10 ugyanaz nem kell több)
 - design ne legyen ovális mögött a kártyán
 - te jössz szeben jelezve
 - lehet bill-ről is játszani (jobbra-balra , space)
+- jelölni irányt merre megy a kör
+- lehessen rendeztetni a kézben lévő lapokat
 
-Done:
- - kezdő lapok száma változik 4 és 7 között
- - letett lapok pakli, nem csak rotál de kicst el is tol
+
+
+bónusz:
+- cset
+- lehessen csalni 6/9-el, kéne valami gesture a lerakott kártyán a lefülelésre
+- kamu uno-bemondás
+- hanghatások 
  
 
 
