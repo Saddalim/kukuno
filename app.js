@@ -21,7 +21,7 @@ const blankGameState = {
 var gameState = blankGameState;
 
 const defaultNamePrefix = "";
-const defaultNames = ["Vőféjkecske", "Holland Gáti Varánusz", "Kacsacsőrű Emlős", "Galléros Császárlégykapó", "Zanzibári Hómuflon", "Dél-argentin Zuzmóokapi", "Csíkostökű Sáskarák", "Mexikói Óriáscthulhu", "Elefántcsontparti Háromfaszú Nyúlantilop", "Arizoniai Péniszkobra", "Kaliforniai Vérhörcsög", "Üzbég Savköpő Menyét", "Irreverzibilis Vérpókmalac", "Rekurzív Medvedisznóember"];
+const defaultNames = ["Vőféjkecske", "Holland Gáti Varánusz", "Kacsacsőrű Emlős", "Galléros Császárlégykapó", "Zanzibári Hómuflon", "Dél-argentin Zuzmóokapi", "Csíkostökű Sáskarák", "Mexikói Óriáscthulhu", "Elefántcsontparti Háromfaszú Nyúlantilop", "Arizonai Péniszkobra", "Kaliforniai Vérhörcsög", "Üzbég Savköpő Menyét", "Irreverzibilis Vérpókmalac", "Rekurzív Medvedisznóember", "Észak-oszét Sivatagi Varangy", "Sárgapöttyös Jávorbölény"];
 
 /**
  * Shuffles the given array, effectively modifying it (not copying!)
@@ -480,7 +480,7 @@ io.on('connection', function(socket)
         switch (card.face)
         {
             case types.FACE.TURNAROUND:
-                gameState.nextPlayerIdx *= -1;
+                gameState.turnDirection *= -1;
                 break;
             case types.FACE.PLUS2:
                 gameState.currentCardPullCnt += 2;

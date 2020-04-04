@@ -6,7 +6,11 @@
 - aki hamarabb rak, az kezd (mi van ha senki sem tud?)
 - aki hamarabb rak, az a második (mi van ha senki sem tud?)
 - nem mondta, hogy uno (külön észrevevés gomb kéne, úgy nagyobb poén)
+<<<<<<< HEAD
 - race condition, async play card-nál 
+=======
+- csak szám lehessen valid kezdőlap
+>>>>>>> 35ad1a4f41a8404fc9695413862647c88f37b94d
 
 bónusz:
 - cset
