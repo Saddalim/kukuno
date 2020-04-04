@@ -11,12 +11,18 @@ const cardCnt = 7;
 const secretCard = {color: types.COLOR.SECRET, face: types.FACE.SECRET};
 const blankGameState = {
     nextPlayerIdx: null,
+    players: {},
     decks: {},
     deck: [],
     playedCards: [],
+    saidUno: {},
     turnDirection: 1,
     currentCardPullCnt: 0
 };
+const blankPlayerState = {
+    state: types.PLAYER_STATE.PLAYING,
+    deck: []
+}
 
 var gameState = blankGameState;
 
@@ -260,8 +266,8 @@ function hideAndEmitDeckSwap(deckSwap, recipients)
  */
 function addCardToClient(card, cid)
 {
-    if (! gameState.decks.hasOwnProperty(cid)) return false;
-    gameState.decks[cid].push(card);
+    if (! gameState.players.hasOwnProperty(cid)) return false;
+    gameState.players[cid].deck.push(card);
     return true;
 }
 
@@ -284,11 +290,15 @@ function restartGame()
     console.log('Signalling restarted');
     io.emit('game restarted');
 
-    gameState = blankGameState;
-    clients.forEach(client => gameState.decks[client.id] = []);
+    gameState = JSON.parse(JSON.stringify(blankGameState));
+    clients.forEach(client => gameState.players[client.id] = JSON.parse(JSON.stringify(blankPlayerState)));
 
     console.log('Filling deck');
     fillDeck();
+    if (gameState.deck.length !== types.CARD_CNT)
+    {
+        console.error("Incorrect deck size: " + gameState.deck.length + " vs " + types.CARD_CNT);
+    }
 
     console.log('Distributing cards');
 
@@ -296,16 +306,24 @@ function restartGame()
     {
         clients.forEach(client => {
             let card = popNextFromDeck();
-            gameState.decks[client.id].push(card);
+            gameState.players[client.id].deck.push(card);
             hideAndEmitCardPull({cid: client.id, card: card}, clients);
         });
     }
 
+    for (let [cid, player] of Object.entries(gameState.players))
+    {
+        console.log(getNameOfClient(cid) + "(" + cid + ")'s deck: " + types.deckToString(player.deck));
+    }
+
+    // Starter card
     gameState.playedCards.push(popNextFromDeck());
     io.emit('card played', {cid: null, card: getTopPlayedCard()});
 
+    // Starting player
     gameState.nextPlayerIdx = Math.floor(Math.random() * clients.length);
     io.emit('current player', {cid: clients[gameState.nextPlayerIdx].id});
+
     console.log('Ready with new game');
 }
 
@@ -314,7 +332,7 @@ function restartGame()
  */
 function advanceTurn(depth = 0)
 {
-    if (depth === gameState.decks.length)
+    if (depth === gameState.players.length)
     {
         // TODO end game
         return;
@@ -329,7 +347,7 @@ function advanceTurn(depth = 0)
     }
 
     // Skip players with no cards remaining
-    if (gameState.decks[clients[gameState.nextPlayerIdx].id].length === 0)
+    if (gameState.players[clients[gameState.nextPlayerIdx].id].deck.length === 0)
     {
         advanceTurn(depth + 1);
     }
@@ -428,7 +446,7 @@ io.on('connection', function(socket)
             }
 
         }
-        if (! gameState.decks.hasOwnProperty(socket.id))
+        if (! gameState.players.hasOwnProperty(socket.id))
         {
             console.log('But (s)he does not have a deck :(');
             return;
@@ -443,14 +461,14 @@ io.on('connection', function(socket)
             console.log('But there are plus cards (' + gameState.currentCardPullCnt + ') waiting to be pulled');
             return;
         }
-        let cardIdx = getPlayableCardIdxFromDeck(cardToPlay, gameState.decks[socket.id]);
+        let cardIdx = getPlayableCardIdxFromDeck(cardToPlay, gameState.players[socket.id].deck);
         if (cardIdx === -1)
         {
-            console.log('But (s)he has no such card :( Available: ' + types.deckToString(gameState.decks[socket.id]));
+            console.log('But (s)he has no such card :( Available: ' + types.deckToString(gameState.players[socket.id].deck));
             return;
         }
 
-        let card = gameState.decks[socket.id][cardIdx];
+        let card = gameState.players[socket.id].deck[cardIdx];
 
         if (types.hasChoosableColor(card))
         {
@@ -473,7 +491,7 @@ io.on('connection', function(socket)
 
         console.log('And (s)he can!' + (asyncPlay ? ' Async play!' : ''));
 
-        gameState.decks[socket.id].splice(cardIdx, 1);
+        gameState.players[socket.id].deck.splice(cardIdx, 1);
         gameState.playedCards.push(card);
 
         // Check for special cards
@@ -498,11 +516,11 @@ io.on('connection', function(socket)
         // Emit the swap event after card play event, so it is clear who played the 0 and from which deck
         if (card.face === 0)
         {
-            console.log(getNameOfClient(socket.id) + ' wants to change decks with ' + getNameOfClient(cardToPlay.cid));
-            let temp = gameState.decks[socket.id];
-            gameState.decks[socket.id] = gameState.decks[cardToPlay.cid];
-            gameState.decks[cardToPlay.cid] = temp;
-            hideAndEmitDeckSwap({deck1: {cid: socket.id, deck: gameState.decks[socket.id]}, deck2: {cid: cardToPlay.cid, deck: gameState.decks[cardToPlay.cid]}}, clients);
+            console.log(getNameOfClient(socket.id) + ' wants to change decks with ' + getNameOfClient(cardToPlay.cid) + " : " + types.deckToString(gameState.players[socket.id].deck) + " <-> " + types.deckToString(gameState.players[cardToPlay.cid].deck));
+            let temp = gameState.players[socket.id].deck;
+            gameState.players[socket.id].deck = gameState.players[cardToPlay.cid].deck;
+            gameState.players[cardToPlay.cid].deck = temp;
+            hideAndEmitDeckSwap({deck1: {cid: socket.id, deck: gameState.players[socket.id].deck}, deck2: {cid: cardToPlay.cid, deck: gameState.players[cardToPlay.cid].deck}}, clients);
         }
 
         advanceTurn();
@@ -514,7 +532,7 @@ io.on('connection', function(socket)
     socket.on('draw card', function() {
         console.log(socket.id + ' tries to draw a card');
         if (clients[gameState.nextPlayerIdx].id !== socket.id) return;
-        if (! gameState.decks.hasOwnProperty(socket.id)) return;
+        if (! gameState.players.hasOwnProperty(socket.id)) return;
 
         let pullCardCnt = Math.max(1, gameState.currentCardPullCnt);
         console.log('And (s)he can and pulls ' + pullCardCnt + ' cards');
@@ -531,6 +549,25 @@ io.on('connection', function(socket)
         advanceTurn();
     });
 
+    /**
+     * A client tries to report that a player has forgot to say UNO
+     */
+    socket.on('report missed uno', function(reportedCid)
+    {
+        console.log(getNameOfClient(socket.id) + "(" + socket.id + ") tries to report that " + getNameOfClient(reportedCid) + "(" + reportedCid + ") has forgot to say UNO");
+        if (!gameState.players.hasOwnProperty(reportedCid))
+        {
+            console.log("But target player doesn't have a deck");
+            return;
+        }
+        if (gameState.players[reportedCid].deck.length > 1)
+        {
+            console.log("But target deck has more than 1 card");
+            return;
+        }
+
+    });
+
     if (isAdmin)
     {
         socket.on('game restart', function() {
@@ -545,9 +582,9 @@ io.on('connection', function(socket)
         io.emit('client list', getPublishableClientList());
 
         // Publish actual game state to new client
-        for (let [cid, deck] of Object.entries(gameState.decks))
+        for (let [cid, player] of Object.entries(gameState.players))
         {
-            deck.forEach(card => hideAndEmitCardPull({cid: cid, card: card}, [{id: socket.id, socket: socket}]));
+            player.deck.forEach(card => hideAndEmitCardPull({cid: cid, card: card}, [{id: socket.id, socket: socket}]));
         }
 
         if (gameState.nextPlayerIdx !== null)
@@ -555,6 +592,7 @@ io.on('connection', function(socket)
             io.to(socket.id).emit('current player', {cid: clients[gameState.nextPlayerIdx].id});
         }
 
+        // TODO assign random name at the first place
         if (renameClient(socket.id, getRandomName()))
         {
             console.log('Advertising client rename');

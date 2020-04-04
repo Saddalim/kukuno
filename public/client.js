@@ -25,7 +25,7 @@ function changeName()
  */
 function createDeck(client)
 {
-    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + '</span><div class="deck-cards" id="deck-cards-' + client.id + '"></div></div>';
+    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + '</span> - <a href="#" class="uno-report-btn" id="uno-report-' + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a><div class="deck-cards" id="deck-cards-' + client.id + '"></div></div>';
 }
 
 /**
@@ -66,6 +66,20 @@ function createCard(card)
 }
 
 /**
+ * Sends report missed UNO of another client to the server
+ * @param cid ID of the client who is suspected to have forgotten to say UNO
+ */
+function reportMissedUno(cid)
+{
+    if ($('#deck-cards' + cid).find('.card').length > 1)
+    {
+        console.error("Target player is not supposed to say UNO", cid);
+        return;
+    }
+    socket.emit('report missed uno', cid);
+}
+
+/**
  * Updates DOM elements based on the given client list. Disappeared clients will be removed, new will be added,
  * the already existing clients will have their names and deck appearances' updated
  * @param newClientList Client list as an array of {id, name}
@@ -80,7 +94,15 @@ function setNewClientList(newClientList)
 
         // Add deck for new clients
         let existingDom = $('#deck-name-' + client.id);
-        if (existingDom.length === 0) deckContainer.append(createDeck(client));
+        if (existingDom.length === 0)
+        {
+            let newDeck = $(createDeck(client));
+            deckContainer.append(newDeck);
+            newDeck.find('.uno-report-btn').click(function (evt)
+            {
+                reportMissedUno($(evt.target).data('cid'));
+            });
+        }
 
         // Rename self (server and admin can rename clients)
         if (client.id === socket.id) $('#ownName').val(client.name);

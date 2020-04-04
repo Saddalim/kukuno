@@ -104,6 +104,13 @@
 
     exports.CARD_CNT = 108;
 
+    exports.PLAYER_STATE = {
+        PLAYING: 1,
+        SAID_UNO: 2,
+        CALLBACKABLE: 3,
+        OUT: 4
+    };
+
     /**
      * Checks whether the given card can be played on top of the other given card,
      * taking into account black cards, even when they are already colored.
