@@ -11,7 +11,7 @@ const missedUnoCardCnt = 3;
 
 const secretCard = {color: types.COLOR.SECRET, face: types.FACE.SECRET};
 const blankGameState = {
-    nextPlayerIdx: null,
+    currentPlayerIdx: null,
     players: {},
     deck: [],
     playedCards: [],
@@ -143,12 +143,11 @@ function disconnectClientWithId(id)
     {
         if (clients[i].id === id)
         {
-            clients[i].connected = false;
-            client = clients[i];
             break;
         }
     }
-    clients.splice(i, 1);
+    client = clients.splice(i, 1);
+    if (gameState.currentPlayerIdx === i) advanceTurn();
     return client;
 }
 
@@ -334,8 +333,8 @@ function restartGame()
     io.emit('card played', {cid: null, card: getTopPlayedCard()});
 
     // Starting player
-    gameState.nextPlayerIdx = Math.floor(Math.random() * clients.length);
-    io.emit('current player', {cid: clients[gameState.nextPlayerIdx].id});
+    gameState.currentPlayerIdx = Math.floor(Math.random() * clients.length);
+    io.emit('current player', {cid: clients[gameState.currentPlayerIdx].id});
 
     console.log('Ready with new game');
 }
@@ -345,7 +344,7 @@ function restartGame()
  */
 function advanceTurn(depth = 0)
 {
-    if (depth === gameState.players.length)
+    if (depth >= Object.keys(gameState.players).length)
     {
         // TODO end game
         return;
@@ -353,37 +352,46 @@ function advanceTurn(depth = 0)
 
     if (depth === 0)
     {
-        console.log("Advance turn, curr idx: " + gameState.nextPlayerIdx + ", direction: ", gameState.turnDirection);
+        console.log("Advance turn, curr idx: " + gameState.currentPlayerIdx + ", direction: ", gameState.turnDirection);
     }
 
-    if (gameState.nextPlayerIdx === null && clients.length > 0) gameState.nextPlayerIdx = 0;
+    if (gameState.currentPlayerIdx === null && clients.length > 0) gameState.currentPlayerIdx = 0;
     else
     {
-        gameState.nextPlayerIdx += gameState.turnDirection;
-        if (gameState.nextPlayerIdx >= clients.length) gameState.nextPlayerIdx = 0;
-        if (gameState.nextPlayerIdx < 0) gameState.nextPlayerIdx = clients.length - 1;
+        gameState.currentPlayerIdx += gameState.turnDirection;
+        if (gameState.currentPlayerIdx >= clients.length) gameState.currentPlayerIdx = 0;
+        if (gameState.currentPlayerIdx < 0) gameState.currentPlayerIdx = clients.length - 1;
     }
 
-    // Skip players with no cards remaining
-    if (! clients.hasOwnProperty(gameState.nextPlayerIdx))
+    let candidateClientId = clients[gameState.currentPlayerIdx].id;
+
+    // Skip clients that are not players (late joiners)
+    if (! gameState.players.hasOwnProperty(candidateClientId))
     {
-        console.log("Will crash, next Idx: " + gameState.nextPlayerIdx + ", client cnt: " + clients.length);
-    }
-    let playerData = gameState.players[clients[gameState.nextPlayerIdx].id];
-    if (playerData.state === types.PLAYER_STATE.OUT)
-    {
-        advanceTurn(depth + 1);
-    }
-    else if (gameState.currentCardPullCnt === 0 && (playerData.state === types.PLAYER_STATE.CALLBACKABLE || playerData.state === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO))
-    {
-        playerData.state = types.PLAYER_STATE.OUT;
-        console.log(getNameOfClient(clients[gameState.nextPlayerIdx].id) + " (" + clients[gameState.nextPlayerIdx].id + ") is out!");
-        io.emit('player out', playerData.id);
+        console.log("Advancing more, client is not a player", gameState.currentPlayerIdx, candidateClientId);
         advanceTurn(depth + 1);
     }
     else
     {
-        io.emit('current player', {cid: clients[gameState.nextPlayerIdx].id});
+        // Skip players that are already out
+        let playerData = gameState.players[candidateClientId];
+        if (playerData.state === types.PLAYER_STATE.OUT)
+        {
+            console.log("Advancing more, player is already out", candidateClientId, gameState.players[candidateClientId]);
+            advanceTurn(depth + 1);
+        }
+        // Make players in callbackable states to go out
+        else if (gameState.currentCardPullCnt === 0 && (playerData.state === types.PLAYER_STATE.CALLBACKABLE || playerData.state === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO))
+        {
+            playerData.state = types.PLAYER_STATE.OUT;
+            console.log(getNameOfClient(candidateClientId) + " (" + candidateClientId + ") is out!");
+            io.emit('player out', candidateClientId);
+            advanceTurn(depth + 1);
+        }
+        else
+        {
+            io.emit('current player', {cid: candidateClientId});
+        }
     }
 }
 
@@ -463,7 +471,7 @@ io.on('connection', function(socket)
         console.log(getNameOfClient(socket.id) + ' (' + socket.id + ') tries to play: ' + types.cardToString(cardToPlay));
         let lastPlayedCard = getTopPlayedCard();
         let asyncPlay = false;
-        if (clients[gameState.nextPlayerIdx].id !== socket.id)
+        if (clients[gameState.currentPlayerIdx].id !== socket.id)
         {
             if (types.cardCanBeAsyncPlayedOn(cardToPlay, getTopPlayedCard()))
             {
@@ -516,7 +524,22 @@ io.on('connection', function(socket)
             }
 
             // Iterate so that callbacks will be handled
-            while (gameState.nextPlayerIdx !== playerIdx) advanceTurn();
+            while (gameState.currentPlayerIdx !== playerIdx) advanceTurn();
+        }
+
+        if (card.face === 0)
+        {
+            console.log(getNameOfClient(socket.id) + ' wants to change decks with ' + getNameOfClient(cardToPlay.cid));
+            if (gameState.players[socket.id].status === types.PLAYER_STATE.OUT
+                || gameState.players[socket.id].status === types.PLAYER_STATE.CALLBACKABLE
+                || gameState.players[socket.id].status === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO
+                || gameState.players[cardToPlay.cid].status === types.PLAYER_STATE.OUT
+                || gameState.players[cardToPlay.cid].status === types.PLAYER_STATE.CALLBACKABLE
+                || gameState.players[cardToPlay.cid].status === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO)
+            {
+                console.log("But this is only possible between players still in play");
+                return;
+            }
         }
 
         console.log('And (s)he can!' + (asyncPlay ? ' Async play!' : ''));
@@ -541,21 +564,6 @@ io.on('connection', function(socket)
                 break;
         }
 
-        if (card.face === 0)
-        {
-            console.log(getNameOfClient(socket.id) + ' wants to change decks with ' + getNameOfClient(cardToPlay.cid));
-            if (gameState.players[socket.id].status === types.PLAYER_STATE.OUT
-                || gameState.players[socket.id].status === types.PLAYER_STATE.CALLBACKABLE
-                || gameState.players[socket.id].status === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO
-                || gameState.players[cardToPlay.cid].status === types.PLAYER_STATE.OUT
-                || gameState.players[cardToPlay.cid].status === types.PLAYER_STATE.CALLBACKABLE
-                || gameState.players[cardToPlay.cid].status === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO)
-            {
-                console.log("But this is only possible between players still in play");
-                return;
-            }
-        }
-
         io.emit('card played', {cid: socket.id, card: card});
 
         // Emit the swap event after card play event, so it is clear who played the 0 and from which deck
@@ -572,10 +580,12 @@ io.on('connection', function(socket)
             hideAndEmitDeckSwap({deck1: {cid: socket.id, deck: gameState.players[socket.id].deck}, deck2: {cid: cardToPlay.cid, deck: gameState.players[cardToPlay.cid].deck}}, clients);
         }
 
-        // Check for out of cards
+        // Check for out of cards (set callbackable state)
+        console.log(getNameOfClient(socket.id) + " (" + socket.id + ") has " + gameState.players[socket.id].deck.length + " cards left");
         if ( gameState.players[socket.id].deck.length === 0)
         {
             gameState.players[socket.id].state = (gameState.players[socket.id].state === types.PLAYER_STATE.SAID_UNO ? types.PLAYER_STATE.CALLBACKABLE_SAID_UNO : types.PLAYER_STATE.CALLBACKABLE);
+            io.emit('player callbackable', socket.id);
         }
 
         advanceTurn();
@@ -586,7 +596,7 @@ io.on('connection', function(socket)
      */
     socket.on('draw card', function() {
         console.log(getNameOfClient(socket.id) + " (" + socket.id + ') tries to draw a card');
-        if (clients[gameState.nextPlayerIdx].id !== socket.id)
+        if (clients[gameState.currentPlayerIdx].id !== socket.id)
         {
             console.log("But (s)he's not the current player!");
             return;
@@ -680,10 +690,12 @@ io.on('connection', function(socket)
         if (gameState.players[reportedCid].state === types.PLAYER_STATE.SAID_UNO || gameState.players[reportedCid].state === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO)
         {
             console.log("But target player has already said UNO");
+            io.to(socket.id).emit('already said uno', reportedCid);
             return;
         }
 
         console.log("And (s)he is right! Punishment awaits " + getNameOfClient(reportedCid) + " (" + reportedCid + ")");
+        io.emit('missed uno busted', {busted: reportedCid, buster: socket.id});
 
         gameState.players[reportedCid].state = types.PLAYER_STATE.PLAYING;
         for (let i = 0; i < missedUnoCardCnt; ++i)
@@ -701,7 +713,7 @@ io.on('connection', function(socket)
     }
     else
     {
-        var client = {id: socket.id, name: "???", socket: socket, connected: true};
+        var client = {id: socket.id, name: "???", socket: socket};
         clients.push(client);
         io.emit('client list', getPublishableClientList());
 
@@ -711,9 +723,9 @@ io.on('connection', function(socket)
             player.deck.forEach(card => hideAndEmitCardPull({cid: cid, card: card}, [{id: socket.id, socket: socket}]));
         }
 
-        if (gameState.nextPlayerIdx !== null)
+        if (gameState.currentPlayerIdx !== null)
         {
-            io.to(socket.id).emit('current player', {cid: clients[gameState.nextPlayerIdx].id});
+            io.to(socket.id).emit('current player', {cid: clients[gameState.currentPlayerIdx].id});
         }
 
         // TODO assign random name at the first place

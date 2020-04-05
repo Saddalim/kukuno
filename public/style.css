@@ -98,6 +98,7 @@ body
     border-radius: 0.5rem;
     text-align: center;
     position: relative;
+    box-shadow: -0.1rem -0.1rem 0.1rem rgba(0, 0, 0, 0.3), 0.2rem 0.2rem 0.2rem #000;
 }
 
 .card-inner
@@ -108,8 +109,7 @@ body
     width: 70%;
     height: 80%;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0);
-    border: 0.35rem solid #fff;
+    background: #fff;
     transform: rotate(40deg);
 }
 
@@ -120,8 +120,11 @@ body
 
 .card-face-center
 {
-    margin: 40% auto 0 auto;
+    position: relative;
+    margin: 21% auto 0 auto;
     font-size: 2.5rem;
+    height: 4rem;
+    line-height: 4rem;
     -webkit-text-stroke-width: 2px;
     -webkit-text-stroke-color: #000;
 }
@@ -129,7 +132,7 @@ body
 .card-face-top
 {
     position: absolute;
-    padding: 0.11rem;
+    margin-left: 0.25rem;
     left: 0;
     top: 0;
 }
@@ -137,7 +140,8 @@ body
 .card-face-bottom
 {
     position: absolute;
-    padding: 0.11rem;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
     right: 0;
     bottom: 0;
     transform: rotate(180deg);
@@ -153,6 +157,7 @@ body
 .card-face-top, .card-face-bottom
 {
     font-size: 1.5rem;
+    line-height: 1.5rem;
     -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #000;
 }
@@ -170,6 +175,7 @@ body
 .own-deck .card-face-top, #table .card-face-top, .own-deck .card-face-bottom, #table .card-face-bottom
 {
     font-size: 2.5rem;
+    line-height: 2.5rem;
     -webkit-text-stroke-width: 2px;
 }
 
@@ -181,6 +187,8 @@ body
 .own-deck .card-face-center, #table .card-face-center
 {
     font-size: 5rem;
+    height: 8rem;
+    line-height: 8rem;
     -webkit-text-stroke-width: 4px;
 }
 
@@ -273,9 +281,19 @@ body
     background: #C42038;
 }
 
+.card-red .card-face-center
+{
+    color: #C42038;
+}
+
 .card-green
 {
     background: #3B9938;
+}
+
+.card-green .card-face-center
+{
+    color: #3B9938;
 }
 
 .card-blue
@@ -283,9 +301,19 @@ body
     background: #0056A6;
 }
 
+.card-blue .card-face-center
+{
+    color: #0056A6;
+}
+
 .card-yellow
 {
     background: #EFD332;
+}
+
+.card-yellow .card-face-center
+{
+    color: #EFD332;
 }
 
 .card-secret
@@ -314,4 +342,26 @@ body
 .toggled
 {
     background: #0f0;
+}
+
+@keyframes msgBoxBlink
+{
+    0% {border-color: #fff;}
+    50% {border-color: #f00;}
+    100% {border-color: #fff;}
+}
+
+#msgBox
+{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border: 9px double #fff;
+    animation: msgBoxBlink 0.2s infinite;
+    padding: 1rem;
+    font-size: 2rem;
+    text-align: center;
+    display: none;
 }

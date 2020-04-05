@@ -5,10 +5,13 @@ var cardPendingPlayed = null;
 var lastPlayedCard = null;
 var willSayUnoOnNextCard = false;
 var clients = [];
+var msgBox = null;
 
 function log(text)
 {
-    $('#logBox').text(text);
+    console.log("Log: ", text);
+    msgBox.text(text);
+    msgBox.fadeIn(100).delay(1500).fadeOut(100);
 }
 
 /**
@@ -170,7 +173,7 @@ function setNewClientList(newClientList)
         else $('#deck-name-' + oldClient.id).text(newClientList[newClientId].name);
     });
 
-    clients = newClientList;
+    clients = JSON.parse(JSON.stringify(newClientList));
 }
 
 /**
@@ -331,7 +334,6 @@ $(function () {
         $('#say-uno-' + socket.id).removeClass("toggled");
 
         let ownCardCnt = getOwnCardCnt();
-        console.log(ownCardCnt, currentPlayer.cid === socket.id);
         if (ownCardCnt === 1 || (ownCardCnt === 2 && currentPlayer.cid === socket.id))
         {
             $('#say-uno-' + socket.id).prop('disabled', false);
@@ -385,12 +387,35 @@ $(function () {
      */
     socket.on('said uno', function(cid)
     {
+        console.log('said uno', cid);
         log(getNameOfClient(cid) + " azt mondta UNO!");
         $('#deck-' + cid).addClass('said-uno');
     });
 
+    /**
+     * Response from the server when reported someone missing UNO, but (s)he did say before
+     */
+    socket.on('already said uno', function(cid)
+    {
+        console.log('already said uno', cid);
+        log(getNameOfClient(cid) + " már mondta, hogy UNO!");
+    });
+
+    /**
+     * A player just ran out of cards, but can be called back for a turn
+     */
+    socket.on('player callbackable', function(cid)
+    {
+        console.log('player callbackable', cid);
+        log(getNameOfClient(cid) + " kifogyott a lapokból, de még visszahívható!");
+    });
+
+    /**
+     * A player is permanently out
+     */
     socket.on('player out', function(cid)
     {
+        console.log('player out', cid);
         log(getNameOfClient(cid) + " kiment!");
     });
 
@@ -400,8 +425,18 @@ $(function () {
     socket.on('deck reshuffled', function()
     {
         let previouslyPlayedCards = $('#playedCards').children().not(':last');
-        $('#deckSize').text(previouslyPlayedCards.length);
+        deckSize = previouslyPlayedCards.length;
+        $('#deckSize').text(deckSize);
         previouslyPlayedCards.remove();
+    });
+
+    /**
+     * Someone successfully realized somebody else forgot to say UNO
+     */
+    socket.on('missed uno busted', function (bustData)
+    {
+        console.log('missed uno busted', bustData);
+        log(getNameOfClient(bustData.buster) + " észrevette, hogy " + getNameOfClient(bustData.busted) + " nem mondta, hogy UNO!");
     });
 
     /**
@@ -420,4 +455,6 @@ $(function () {
         if (currentPlayer.cid !== socket.id) return;
         socket.emit('draw card');
     });
+
+    msgBox = $('#msgBox');
 });
