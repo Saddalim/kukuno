@@ -541,12 +541,26 @@ io.on('connection', function(socket)
                 break;
         }
 
+        if (card.face === 0)
+        {
+            console.log(getNameOfClient(socket.id) + ' wants to change decks with ' + getNameOfClient(cardToPlay.cid));
+            if (gameState.players[socket.id].status === types.PLAYER_STATE.OUT
+                || gameState.players[socket.id].status === types.PLAYER_STATE.CALLBACKABLE
+                || gameState.players[socket.id].status === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO
+                || gameState.players[cardToPlay.cid].status === types.PLAYER_STATE.OUT
+                || gameState.players[cardToPlay.cid].status === types.PLAYER_STATE.CALLBACKABLE
+                || gameState.players[cardToPlay.cid].status === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO)
+            {
+                console.log("But this is only possible between players still in play");
+                return;
+            }
+        }
+
         io.emit('card played', {cid: socket.id, card: card});
 
         // Emit the swap event after card play event, so it is clear who played the 0 and from which deck
         if (card.face === 0)
         {
-            console.log(getNameOfClient(socket.id) + ' wants to change decks with ' + getNameOfClient(cardToPlay.cid) + " : " + types.deckToString(gameState.players[socket.id].deck) + " <-> " + types.deckToString(gameState.players[cardToPlay.cid].deck));
             let temp = gameState.players[socket.id].deck;
             gameState.players[socket.id].deck = gameState.players[cardToPlay.cid].deck;
             gameState.players[cardToPlay.cid].deck = temp;
