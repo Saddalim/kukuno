@@ -329,6 +329,12 @@ function restartGame()
     }
 
     // Starter card
+    for(let starterCard = gameState.deck[0]; ! types.canBeStarterCard(starterCard); )
+    {
+        console.log(types.cardToString(starterCard) + " is not a valid starter card, rotating...");
+        gameState.deck.push(gameState.deck.splice(0, 1));
+        starterCard = gameState.deck[0];
+    }
     gameState.playedCards.push(popNextFromDeck());
     io.emit('card played', {cid: null, card: getTopPlayedCard()});
 

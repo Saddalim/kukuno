@@ -147,6 +147,18 @@
     exports.hasChoosableColor = function(card)
     {
         return card.color === this.COLOR.BLACK;
-    }
+    };
+
+    /**
+     * Check whether the given card can be a starter card of a game.
+     * @param card
+     * @returns {boolean} True, if can be
+     */
+    exports.canBeStarterCard = function(card)
+    {
+        if (card.color === this.COLOR.BLACK) return false;
+        if (card.face === 0) return false;
+        return Number.isInteger(card.face) && card.face < 10;
+    };
 
 })(typeof exports === 'undefined'? this['types']={}: exports);
