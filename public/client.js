@@ -44,7 +44,14 @@ function changeName()
  */
 function createDeck(client)
 {
-    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + '</span> - ' + (client.id === socket.id ? '<button class="say-uno-btn" id="say-uno-' + client.id + '" disabled>UNO!</button>' : '<a href="#" class="uno-report-btn" id="uno-report-' + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a>') + '<div class="deck-cards" id="deck-cards-' + client.id + '"></div></div>';
+    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') 
+    + '" id="deck-' + client.id + '" data-cid="' 
+    + client.id + '"><span id="deck-name-' + client.id 
+    + '" class="deck-name">' + client.name + '</span> - ' 
+    + (client.id === socket.id ? '<button class="say-uno-btn" id="say-uno-' + client.id + '" disabled>UNO!</button> <button class="sort-btn" id="sort-btn-' + client.id + '">Rendezzed mán!</button>' : '<a href="#" class="uno-report-btn" id="uno-report-'
+    	
+    + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a>') 
+    + '<div class="deck-cards" id="deck-cards-' + client.id + '"></div></div>';
 }
 
 /**
@@ -81,7 +88,7 @@ function createDeckChosantOverlay()
  */
 function createCard(card)
 {
-    return '<div class="card-container"><div class="card card-' + (card.color === types.COLOR.SECRET ? 'secret' : types.colorToString(card.color).toLowerCase()) + ' card-' + (card.face === types.FACE.SECRET ? 'secret' : card.face) + '" data-color="' + card.color + '" data-face="' + card.face + '"><div class="card-inner"></div><div class="card-num card-face-center" data-face="' + types.faceToString(card.face).toLowerCase() + '">' + types.faceToSymbol(card.face) + '</div><div class="card-num card-face-top" data-face="' + types.faceToString(card.face).toLowerCase() + '">' + types.faceToSymbol(card.face) + '</div><div class="card-num card-face-bottom" data-face="' + types.faceToString(card.face).toLowerCase() + '">' + types.faceToSymbol(card.face) + '</div></div></div>';
+    return '<div class="card card-' + (card.color === types.COLOR.SECRET ? 'secret' : types.colorToString(card.color).toLowerCase()) + ' card-' + (card.face === types.FACE.SECRET ? 'secret' : card.face) + '" data-color="' + card.color + '" data-face="' + card.face + '"><div class="card-inner"></div><div class="card-num card-face-center" data-face="' + types.faceToString(card.face).toLowerCase() + '">' + types.faceToSymbol(card.face) + '</div><div class="card-num card-face-top" data-face="' + types.faceToString(card.face).toLowerCase() + '">' + types.faceToSymbol(card.face) + '</div><div class="card-num card-face-bottom" data-face="' + types.faceToString(card.face).toLowerCase() + '">' + types.faceToSymbol(card.face) + '</div></div>';
 }
 
 /**
@@ -94,10 +101,32 @@ function getOwnCardCnt()
 }
 
 /**
+ * Sort my deck.
+ */
+function sortDeck()
+{
+	var toSort = $(".own-deck").find(".card");
+	toSort.sort(function(a,b) {
+		var acolor = $(a).data('color');
+		var bcolor = $(b).data('color');	    
+	    if (acolor > bcolor) return 1;
+	    if (acolor < bcolor) return -1;
+	    var aface =$(a).data('face');
+	    var bface =$(b).data('face');
+	    if (aface > bface) return 1;
+	    return -1;
+	});
+	console.log(toSort);
+	toSort.detach().prependTo($(".own-deck").find(".deck-cards"));
+}
+
+/**
  * Sends UNO shout to server, if necessary
  */
 function sayUno()
 {
+
+	
     let ownCardCnt = getOwnCardCnt();
     if (ownCardCnt > types.UNO_MAX_CARD_CNT)
     {
@@ -154,6 +183,12 @@ function setNewClientList(newClientList)
             {
                 sayUno();
             });
+            
+            newDeck.find('.sort-btn').click(function(evt)
+            {
+                sortDeck();
+            });
+            
             newDeck.find('.uno-report-btn').click(function (evt)
             {
                 reportMissedUno($(evt.target).data('cid'));

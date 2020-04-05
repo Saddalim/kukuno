@@ -14,6 +14,7 @@
 - lehet bill-ről is játszani (jobbra-balra , space)
 - jelölni irányt merre megy a kör
 - lehessen rendeztetni a kézben lévő lapokat
+- csúnya piros keretet levenni a kijelölt lapról (ha Herr Mr Gaskó főfejlesztő úr beleegyezik) 
 
 
 

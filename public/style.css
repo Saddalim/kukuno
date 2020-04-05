@@ -55,18 +55,20 @@ body
     height: 15rem;
 }
 
-#playedCards .card-container
+#playedCards .card
 {
     position: absolute;
     left: 20%;
     top: 5%;
 }
 
-.card-container:hover {
+.card:hover 
+{
     transform: scale(1.1);
+ 	transition: ease-in-out 0.15s;
 }
 
-.deck-cards .card-container
+.deck-cards .card
 {
     display: inline-block;
 }
@@ -103,6 +105,7 @@ body
     text-align: center;
     position: relative;
     box-shadow: -0.1rem -0.1rem 0.1rem rgba(0, 0, 0, 0.3), 0.2rem 0.2rem 0.2rem #000;
+	transition: ease-in-out 0.15s;
 }
 
 .card-inner
@@ -325,7 +328,7 @@ body
     background: #999;
 }
 
-@keyframes card-highlight
+@keyframes next-player-deck-highlight
 {
     0% {border-color: #fff;}
     50% {border-color: #f88}
@@ -335,12 +338,11 @@ body
 .own-deck .card:hover, #mainDeck:hover
 {
     cursor: pointer;
-    animation: card-highlight 0.8s infinite;
 }
 
 .own-deck.current-player
 {
-    animation: card-highlight 1s infinite;
+    animation: next-player-deck-highlight 1s infinite;
 }
 
 .toggled
