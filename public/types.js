@@ -91,7 +91,7 @@
     /**
      * Transforms a given deck of cards to a human readable string (e.g. for logging)
      * @param deck The deck given as array of cards {color, face}
-     * @param delim Delimiter between cards, defaults to comma
+     * @param delim {string} Delimiter between cards, defaults to comma
      * @returns {string} The human readable string
      */
     exports.deckToString = function(deck, delim = ', ')
@@ -111,6 +111,24 @@
         CALLBACKABLE: 3,
         CALLBACKABLE_SAID_UNO: 4,
         OUT: 5
+    };
+
+    /**
+     * Transforms the given player state to a human readable string
+     * @param {number} state The state
+     * @returns {string} The human readable string
+     */
+    exports.playerStateToString = function(state)
+    {
+        switch (state)
+        {
+            case this.PLAYER_STATE.PLAYING: return "playing";
+            case this.PLAYER_STATE.SAID_UNO: return "said uno";
+            case this.PLAYER_STATE.CALLBACKABLE: return "callbackable";
+            case this.PLAYER_STATE.CALLBACKABLE_SAID_UNO: return "callbackable / said uno";
+            case this.PLAYER_STATE.OUT: return "out";
+        }
+        return "???";
     };
 
     /**
@@ -151,7 +169,7 @@
 
     /**
      * Check whether the given card can be a starter card of a game.
-     * @param card
+     * @param card The card as {color, face}
      * @returns {boolean} True, if can be
      */
     exports.canBeStarterCard = function(card)
@@ -160,5 +178,15 @@
         if (card.face === 0) return false;
         return Number.isInteger(card.face) && card.face < 10;
     };
+
+    /**
+     * Checks whether a client in the given state can be a target of a swap card
+     * @param {number} state
+     * @returns {boolean}
+     */
+    exports.canBeTargetOfSwap = function(state)
+    {
+        return state === this.PLAYER_STATE.PLAYING || state === this.PLAYER_STATE.SAID_UNO;
+    }
 
 })(typeof exports === 'undefined'? this['types']={}: exports);

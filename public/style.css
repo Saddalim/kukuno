@@ -62,7 +62,7 @@ body
     top: 5%;
 }
 
-.card:hover 
+.own-deck .card:hover
 {
     transform: scale(1.1);
  	transition: ease-in-out 0.15s;
@@ -276,6 +276,11 @@ body
     cursor: pointer;
     background: rgba(255, 255, 255, 0.75);
     transition: ease-in-out 0.3s;
+}
+
+.chosen-double-zero
+{
+    background: rgba(255, 0, 0, 0.2) !important;
 }
 
 .card-black

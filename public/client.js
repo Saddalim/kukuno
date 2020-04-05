@@ -1,9 +1,10 @@
 var socket = io({type: 'client'});
 var deckSize = 0;
 var currentPlayer = {cid: null};
-var cardPendingPlayed = null;
-var lastPlayedCard = null;
-var willSayUnoOnNextCard = false;
+var cardPendingPlayed = null; // card to be played, saved while a color selection overlay is displayed over black cards
+var lastPlayedCard = null; // card last played, on top of the played cards
+var willSayUnoOnNextCard = false; // true if the player pre-selected uno to send the 'say uno' event along with the played card
+var firstZeroTargetCid = null; // contains the first target cid when 0 played as last card and selecting the two opponents to switch cards
 var clients = [];
 var msgBox = null;
 
@@ -11,7 +12,7 @@ function log(text)
 {
     console.log("Log: ", text);
     msgBox.text(text);
-    msgBox.fadeIn(100).delay(1500).fadeOut(100);
+    msgBox.fadeIn(100).delay(1800).fadeOut(100);
 }
 
 /**
@@ -69,7 +70,7 @@ function createColorChooserOverlay()
  */
 function createDeckChooserOverlay()
 {
-    return '<div class="card-overlay card-deck-chooser">Kivel?</div>';
+    return '<div class="card-overlay card-deck-chooser">' + (getOwnCardCnt() === 1 ? 'Kik?' : 'Kivel?') + '</div>';
 }
 
 /**
@@ -212,17 +213,6 @@ function setNewClientList(newClientList)
 }
 
 /**
- * Handles a card pull event
- * @param cardPull
- */
-function pullCard(cardPull)
-{
-    let cardElem = $(createCard(cardPull.card));
-    $('#deck-cards-' + cardPull.cid).append(cardElem);
-    cardElem.click(playCard);
-}
-
-/**
  * Requests to play a card from the server, if possible
  * TODO starter card plays
  * @param evt
@@ -288,12 +278,15 @@ function playCard(evt)
         }
     }
 
+    cardPendingPlayed = domElem;
+
     // Handle 0 deck chooser overlay
     if (card.face === 0)
     {
         domElem.append(createDeckChooserOverlay());
-        $('.deck:not(.own-deck)').append(createDeckChosantOverlay());
-        $('.deck-chooser-overlay').click(function(evt) {
+        $('.deck:not(.own-deck)').filter(function(idx, elem) {return $(elem).find('.card').length > 0}).append(createDeckChosantOverlay());
+        $('.deck-chooser-overlay').click(function(evt)
+        {
             let domElem = $(evt.target);
             let parents = domElem.parents('.deck');
             if (parents.length < 1)
@@ -302,14 +295,44 @@ function playCard(evt)
                 return;
             }
             let deckDom = $(parents[0]);
-            $('.card-overlay').remove();
-            card.cid = deckDom.data('cid');
-            socket.emit('play card', card);
+
+            if (getOwnCardCnt() === 1)
+            {
+                if ($('.deck:not(.own-deck)').filter(function(idx, elem) {return $(elem).find('.card').length > 0}).length > 1)
+                {
+                    // At least 2 other players, choose who to swap
+
+                    domElem.toggleClass('chosen-double-zero');
+                    let choices = $('.chosen-double-zero');
+                    if (choices.length === 2)
+                    {
+                        // Got both
+                        card.cid1 = $(choices[0]).parents('.deck').data('cid');
+                        card.cid2 = $(choices[1]).parents('.deck').data('cid');
+                        socket.emit('play card', card);
+                    }
+                }
+                else
+                {
+                    // There is only 1 other player in game, no effect of 0 card as last, just play it
+
+                    // TODO ugly to create then remove overlay
+                    $('.card-overlay').remove();
+                    socket.emit('play card', card);
+                }
+            }
+            else
+            {
+                // Simple play of zero card mid game
+
+                $('.card-overlay').remove();
+                card.cid = deckDom.data('cid');
+                socket.emit('play card', card);
+            }
+
         });
         return;
     }
-
-    cardPendingPlayed = domElem;
 
     if (willSayUnoOnNextCard)
     {
@@ -319,6 +342,17 @@ function playCard(evt)
     }
     socket.emit('play card', card);
 
+}
+
+/**
+ * Handles a card pull event
+ * @param cardPull
+ */
+function pullCard(cardPull)
+{
+    let cardElem = $(createCard(cardPull.card));
+    $('#deck-cards-' + cardPull.cid).append(cardElem);
+    cardElem.click(playCard);
 }
 
 $(function () {
@@ -341,6 +375,7 @@ $(function () {
         --deckSize;
         $('#deckSize').text(deckSize);
         $('#deck-' + cardPull.cid).removeClass('said-uno');
+        $('.card-overlay').remove();
     });
 
     /**
@@ -403,6 +438,7 @@ $(function () {
         {
             $('#deck-cards-' + event.cid).children().last().remove();
         }
+        $('.card-overlay').remove();
     });
 
     /**

@@ -290,6 +290,25 @@ function getPublishableClientList()
 }
 
 /**
+ * Swaps the decks of the two given players and emits the necessary events
+ * @param {number} cid1
+ * @param {number} cid2
+ */
+function handleDeckSwap(cid1, cid2)
+{
+    console.log('Swapping decks of ' + cid1 + " and " + cid2);
+    let temp = gameState.players[cid1].deck;
+    gameState.players[cid1].deck = gameState.players[cid2].deck;
+    gameState.players[cid2].deck = temp;
+
+    // Swapping decks discards UNOs said earlier!
+    gameState.players[cid1].state = types.PLAYER_STATE.PLAYING;
+    gameState.players[cid2].state = types.PLAYER_STATE.PLAYING;
+
+    hideAndEmitDeckSwap({deck1: {cid: cid1, deck: gameState.players[cid1].deck}, deck2: {cid: cid2, deck: gameState.players[cid2].deck}}, clients);
+}
+
+/**
  * Completely discards current game state, and starts a new
  */
 function restartGame()
@@ -350,7 +369,7 @@ function restartGame()
  */
 function advanceTurn(depth = 0)
 {
-    if (depth >= Object.keys(gameState.players).length)
+    if (depth >= Object.keys(gameState.players).filter(cid => gameState.players[cid].state !== types.PLAYER_STATE.OUT).length)
     {
         // TODO end game
         return;
@@ -535,17 +554,29 @@ io.on('connection', function(socket)
 
         if (card.face === 0)
         {
-            console.log(getNameOfClient(socket.id) + ' wants to change decks with ' + getNameOfClient(cardToPlay.cid));
-            if (gameState.players[socket.id].status === types.PLAYER_STATE.OUT
-                || gameState.players[socket.id].status === types.PLAYER_STATE.CALLBACKABLE
-                || gameState.players[socket.id].status === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO
-                || gameState.players[cardToPlay.cid].status === types.PLAYER_STATE.OUT
-                || gameState.players[cardToPlay.cid].status === types.PLAYER_STATE.CALLBACKABLE
-                || gameState.players[cardToPlay.cid].status === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO)
+            if (gameState.players[socket.id].deck.length === 1)
             {
-                console.log("But this is only possible between players still in play");
-                return;
+                // Swap card as last
+                console.log(getNameOfClient(socket.id) + ' wants ' + getNameOfClient(cardToPlay.cid1) + " and " + getNameOfClient(cardToPlay.cid2) + " to change");
+                if (! types.canBeTargetOfSwap(gameState.players[cardToPlay.cid1].state)
+                    || ! types.canBeTargetOfSwap(gameState.players[cardToPlay.cid2].state))
+                {
+                    console.log("But this is only possible between players still in play; " + getNameOfClient(cardToPlay.cid1) + " is " + types.playerStateToString(gameState.players[cardToPlay.cid1].state) + " (" + gameState.players[cardToPlay.cid1].state + "), " + getNameOfClient(cardToPlay.cid2) + " is " + types.playerStateToString(gameState.players[cardToPlay.cid2].state) + "(" + gameState.players[cardToPlay.cid2].state + ")");
+                    return;
+                }
             }
+            else
+            {
+                // Normal swap card
+                console.log(getNameOfClient(socket.id) + ' wants to change decks with ' + getNameOfClient(cardToPlay.cid));
+                if (! types.canBeTargetOfSwap(gameState.players[socket.id].state)
+                    || ! types.canBeTargetOfSwap(gameState.players[cardToPlay.cid].state))
+                {
+                    console.log("But this is only possible between players still in play; " + getNameOfClient(socket.id) + " is " + types.playerStateToString(gameState.players[socket.id].state) + " (" + gameState.players[socket.id].state + "), " + getNameOfClient(cardToPlay.cid) + " is " + types.playerStateToString(gameState.players[cardToPlay.cid].state) + "(" + gameState.players[cardToPlay.cid].state + ")");
+                    return;
+                }
+            }
+
         }
 
         console.log('And (s)he can!' + (asyncPlay ? ' Async play!' : ''));
@@ -575,15 +606,16 @@ io.on('connection', function(socket)
         // Emit the swap event after card play event, so it is clear who played the 0 and from which deck
         if (card.face === 0)
         {
-            let temp = gameState.players[socket.id].deck;
-            gameState.players[socket.id].deck = gameState.players[cardToPlay.cid].deck;
-            gameState.players[cardToPlay.cid].deck = temp;
-
-            // Swapping decks discards UNOs said earlier!
-            gameState.players[socket.id].state = types.PLAYER_STATE.PLAYING;
-            gameState.players[cardToPlay.cid].state = types.PLAYER_STATE.PLAYING;
-
-            hideAndEmitDeckSwap({deck1: {cid: socket.id, deck: gameState.players[socket.id].deck}, deck2: {cid: cardToPlay.cid, deck: gameState.players[cardToPlay.cid].deck}}, clients);
+            if (gameState.players[socket.id].deck.length === 0)
+            {
+                // Swap card as last
+                handleDeckSwap(cardToPlay.cid1, cardToPlay.cid2);
+            }
+            else
+            {
+                // Normal swap card
+                handleDeckSwap(socket.id, cardToPlay.cid);
+            }
         }
 
         // Check for out of cards (set callbackable state)
