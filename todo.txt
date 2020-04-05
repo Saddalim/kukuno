@@ -1,31 +1,19 @@
 - kimaradszra csak ugyanolyan kimaradszot lehet rátenni, pedig a következő ember bármilyen rátehet async
-- 0 mint utolsó kártya csere
-- visszahívás / kimenők jelzése
 - játék vége
 - aki hamarabb rak, az kezd (mi van ha senki sem tud?)
 - aki hamarabb rak, az a második (mi van ha senki sem tud?)
-- race condition, async play card-nál 
-- csak szám lehessen valid kezdőlap
-- kiment emberrel ne lehessen cserélni - bug  !!!
+- race condition, async play card-nál
 - asztalhoz normális háttér (textúra)
 - hány lap van, elfedni (esetleg ha több mint 10 ugyanaz nem kell több)
-- design ne legyen ovális mögött a kártyán
 - te jössz szebben jelezve
 - lehet bill-ről is játszani (jobbra-balra , space)
 - jelölni irányt merre megy a kör
-- lehessen rendeztetni a kézben lévő lapokat
-- csúnya piros keretet levenni a kijelölt lapról (ha Herr Mr Gaskó főfejlesztő úr beleegyezik) 
 - fent a játékosok listája div már nem kell
-- amikor egy játékos marad, nincs vége a játéknak
 - saját játékos paklija legfelül legyen
-
 
 bónusz:
 - cset
 - lehessen csalni 6/9-el, kéne valami gesture a lerakott kártyán a lefülelésre
 - kamu uno-bemondás
-- hanghatások 
+- hanghatások - lol :D
  
-
-
-

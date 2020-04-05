@@ -371,7 +371,7 @@ function advanceTurn(depth = 0)
 {
     if (depth >= Object.keys(gameState.players).filter(cid => gameState.players[cid].state !== types.PLAYER_STATE.OUT).length)
     {
-        // TODO end game
+        io.emit('end game');
         return;
     }
 

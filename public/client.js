@@ -11,7 +11,15 @@ var msgBox = null;
 function log(text)
 {
     console.log("Log: ", text);
-    msgBox.text(text);
+    if (msgBox.is(":visible"))
+    {
+        msgBox.text(msgBox.text() + '<hr>' + text);
+    }
+    else
+    {
+        msgBox.text(text);
+    }
+
     msgBox.fadeIn(100).delay(1800).fadeOut(100);
 }
 
@@ -45,14 +53,7 @@ function changeName()
  */
 function createDeck(client)
 {
-    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') 
-    + '" id="deck-' + client.id + '" data-cid="' 
-    + client.id + '"><span id="deck-name-' + client.id 
-    + '" class="deck-name">' + client.name + '</span> - ' 
-    + (client.id === socket.id ? '<button class="say-uno-btn" id="say-uno-' + client.id + '" disabled>UNO!</button> <button class="sort-btn" id="sort-btn-' + client.id + '">Rendezzed mán!</button>' : '<a href="#" class="uno-report-btn" id="uno-report-'
-    	
-    + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a>') 
-    + '<div class="deck-cards" id="deck-cards-' + client.id + '"></div></div>';
+    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + ' (' + client.id + ')</span> - ' + (client.id === socket.id ? '<button class="say-uno-btn" id="say-uno-' + client.id + '" disabled>UNO!</button> <button class="sort-btn" id="sort-btn-' + client.id + '">Rendezzed mán!</button>' : '<a href="#" class="uno-report-btn" id="uno-report-' + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a>') + '<div class="deck-cards" id="deck-cards-' + client.id + '"></div></div>';
 }
 
 /**
@@ -508,6 +509,12 @@ $(function () {
     {
         console.log('missed uno busted', bustData);
         log(getNameOfClient(bustData.buster) + " észrevette, hogy " + getNameOfClient(bustData.busted) + " nem mondta, hogy UNO!");
+    });
+
+    socket.on('end game', function()
+    {
+        console.log('end game');
+        log("Vége a játéknak!");
     });
 
     /**
