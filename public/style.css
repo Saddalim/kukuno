@@ -62,6 +62,10 @@ body
     top: 5%;
 }
 
+.card-container:hover {
+    transform: scale(1.1);
+}
+
 .deck-cards .card-container
 {
     display: inline-block;
