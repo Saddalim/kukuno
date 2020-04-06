@@ -10,10 +10,10 @@
 - jelölni irányt merre megy a kör
 - fent a játékosok listája div már nem kell
 - saját játékos paklija legfelül legyen
+- lehet unot mondani 2 kartyanal ha egyiket se tudod letenni
 
 bónusz:
 - cset
 - lehessen csalni 6/9-el, kéne valami gesture a lerakott kártyán a lefülelésre
 - kamu uno-bemondás
 - hanghatások - lol :D
- 
