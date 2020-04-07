@@ -13,7 +13,7 @@ function log(text)
     console.log("Log: ", text);
     if (msgBox.is(":visible"))
     {
-        msgBox.text(msgBox.text() + '<hr>' + text);
+        msgBox.html(msgBox.text() + '<hr>' + text);
     }
     else
     {
@@ -53,7 +53,8 @@ function changeName()
  */
 function createDeck(client)
 {
-    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + ' (' + client.id + ')</span> - ' + (client.id === socket.id ? '<button class="say-uno-btn" id="say-uno-' + client.id + '" disabled>UNO!</button> <button class="sort-btn" id="sort-btn-' + client.id + '">Rendezzed mán!</button>' : '<a href="#" class="uno-report-btn" id="uno-report-' + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a>') + '<div class="deck-cards" id="deck-cards-' + client.id + '"></div></div>';
+    console.log("BAGOLY 1", client.name);
+    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + ' (' + client.id + ')</span>' + (client.id === socket.id ? '<input type="text" id="ownName" value="' + client.name + '" onchange="changeName()">' : '') + ' - ' + (client.id === socket.id ? '<button class="say-uno-btn" id="say-uno-' + client.id + '" disabled>UNO!</button> <button class="sort-btn" id="sort-btn-' + client.id + '">Rendezzed mán!</button>' : '<a href="#" class="uno-report-btn" id="uno-report-' + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a>') + '<div class="deck-cards" id="deck-cards-' + client.id + '"></div></div>';
 }
 
 /**
@@ -169,17 +170,14 @@ function reportMissedUno(cid)
  */
 function setNewClientList(newClientList)
 {
-    var clientListDom = $('#clientList');
     var deckContainer = $('#decks');
-    clientListDom.empty();
     newClientList.forEach(client => {
-        clientListDom.append($('<li>').text(client.name + ' (' + client.id + ')'));
-
         // Add deck for new clients
         let existingDom = $('#deck-name-' + client.id);
         if (existingDom.length === 0)
         {
             let newDeck = $(createDeck(client));
+
             deckContainer.append(newDeck);
             newDeck.find('.say-uno-btn').click(function(evt)
             {
@@ -356,6 +354,31 @@ function pullCard(cardPull)
     cardElem.click(playCard);
 }
 
+function arrangeDecks()
+{
+    // Rotate decks so that own is first, then skip - to preserve the order of the turn around the table
+    let otherDecks = $('.deck');
+    for (let currentDeck = otherDecks[0]; ! $(currentDeck).hasClass('own-deck'); )
+    {
+        otherDecks.push(otherDecks.splice(0, 1));
+        currentDeck = otherDecks[0];
+    }
+    otherDecks.splice(0, 1);
+
+    let otherDeckCnt = otherDecks.length;
+    let angleDiff = 270 / (otherDeckCnt + 1);
+    otherDecks.each(function (idx, deck)
+    {
+        let rotateAngle = -135 + (angleDiff * (idx + 1));
+        while (rotateAngle < 0) rotateAngle += 360;
+        console.log("Adjusting ", idx, deck);
+
+        $(deck).css('transform', 'translate(-50%, -50%) rotate(-' + rotateAngle + 'deg) translateY(-40vh) rotate(180deg)');
+    });
+
+
+}
+
 $(function () {
     /**
      * New client list msg
@@ -364,6 +387,7 @@ $(function () {
     {
         console.log('client list', clientList);
         setNewClientList(clientList);
+        arrangeDecks();
     });
 
     /**
@@ -389,6 +413,7 @@ $(function () {
         $('#playedCards').empty();
         deckSize = types.CARD_CNT;
         $('#deckSize').text(deckSize);
+        arrangeDecks();
     });
 
     /**

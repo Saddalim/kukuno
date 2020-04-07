@@ -28,9 +28,14 @@ body
 
 #table
 {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background: #7a5131;
     width: 100%;
-    height: 22rem;
+    height: 100%;
+    border-radius: 50%;
     display: flex;
     flex-flow: row nowrap;
     justify-content: space-around;
@@ -38,8 +43,21 @@ body
     padding-top: 3rem;
 }
 
+#table-decks
+{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -65%);
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-around;
+    align-content: center;
+}
+
 #mainDeck
 {
+    margin-right: 3rem;
 }
 
 .deckSize
@@ -64,25 +82,52 @@ body
 
 .own-deck .card:hover
 {
-    transform: scale(1.1);
+    transform: scale(1.02) translate(-1.7rem, -3.2rem) rotate(5deg);
  	transition: ease-in-out 0.15s;
+}
+
+.own-deck .deck-name
+{
+    display: none;
 }
 
 .deck-cards .card
 {
     display: inline-block;
+    margin-left: -2.9rem;
 }
 
 .played-card
 {
 }
 
+#ownName
+{
+    width: 10rem;
+}
+
 .deck
 {
     border: 4px solid #000;
-    padding: 5px;
+    padding: 0.2rem 0.2rem 0.2rem 1.8rem;
     background: #ccc;
-    position: relative;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: center center;
+    box-shadow: -0.1rem -0.1rem 0.1rem rgba(0, 0, 0, 0.3), 0.2rem 0.2rem 0.2rem #000;
+    text-align: center;
+    max-width: 27rem;
+    white-space: nowrap;
+}
+
+.own-deck
+{
+    transform: translate(-50%, 0);
+    bottom: 5vh;
+    top: unset;
+    max-width: 31rem;
+    padding-left: 6.2rem;
 }
 
 .current-player
@@ -154,7 +199,7 @@ body
     transform: rotate(180deg);
 }
 
-.own-deck .card, #table .card
+.own-deck .card, #table-decks .card
 {
     width: 8rem;
     height: 12rem;
@@ -169,17 +214,22 @@ body
     -webkit-text-stroke-color: #000;
 }
 
-.own-deck .card, #table .card
+.own-deck .card
 {
-    border-radius: 1rem !important;
+    margin-left: -4.5rem;
 }
 
-.own-deck .card-inner, #table.card-inner
+.own-deck .card, #table-decks .card
+{
+    border-radius: 0.8rem;
+}
+
+.own-deck .card-inner, #table-decks.card-inner
 {
     border-width: 0.7rem;
 }
 
-.own-deck .card-face-top, #table .card-face-top, .own-deck .card-face-bottom, #table .card-face-bottom
+.own-deck .card-face-top, #table-decks .card-face-top, .own-deck .card-face-bottom, #table-decks .card-face-bottom
 {
     font-size: 2.5rem;
     line-height: 2.5rem;
@@ -191,7 +241,7 @@ body
     text-decoration: underline;
 }
 
-.own-deck .card-face-center, #table .card-face-center
+.own-deck .card-face-center, #table-decks .card-face-center
 {
     font-size: 5rem;
     height: 8rem;
@@ -199,7 +249,7 @@ body
     -webkit-text-stroke-width: 4px;
 }
 
-.own-deck .card-inner, #table .card-inner
+.own-deck .card-inner, #table-decks .card-inner
 {
     border-width: 0.7rem;
 }
@@ -375,4 +425,14 @@ body
     font-size: 2rem;
     text-align: center;
     display: none;
+}
+
+#decks
+{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0);
 }

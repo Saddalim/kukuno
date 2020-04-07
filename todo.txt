@@ -1,5 +1,4 @@
 - kimaradszra csak ugyanolyan kimaradszot lehet rátenni, pedig a következő ember bármilyen rátehet async
-- játék vége
 - aki hamarabb rak, az kezd (mi van ha senki sem tud?)
 - aki hamarabb rak, az a második (mi van ha senki sem tud?)
 - race condition, async play card-nál
@@ -11,9 +10,18 @@
 - fent a játékosok listája div már nem kell
 - saját játékos paklija legfelül legyen
 - lehet unot mondani 2 kartyanal ha egyiket se tudod letenni
+- 2 játékosnál vége a játéknak
+- több üzenet egyszerre kiírja hogy <hr>
+- karakterkódolás visszaforgatónál?
+- nézőknek minuszba megy a lapszámláló
 
 bónusz:
 - cset
 - lehessen csalni 6/9-el, kéne valami gesture a lerakott kártyán a lefülelésre
 - kamu uno-bemondás
 - hanghatások - lol :D
+- visszacsatlakozás
+- saját mp3 az uno hangra
+
+ui:
+- nincsenek középre rendezve a kártyák a deckben, csúsznak ki jobbra - dinamikus negative margin?
