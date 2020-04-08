@@ -369,7 +369,7 @@ function restartGame()
  */
 function advanceTurn(depth = 0)
 {
-    if (depth >= Object.keys(gameState.players).filter(cid => gameState.players[cid].state !== types.PLAYER_STATE.OUT).length)
+    if (depth > Object.keys(gameState.players).filter(cid => gameState.players[cid].state !== types.PLAYER_STATE.OUT).length)
     {
         io.emit('end game');
         return;
