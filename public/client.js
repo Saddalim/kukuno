@@ -1,10 +1,16 @@
 var socket = io({type: 'client'});
 var deckSize = 0;
 var currentPlayer = {cid: null};
-var cardPendingPlayed = null; // card to be played, saved while a color selection overlay is displayed over black cards
+var cardPendingPlayed = null; // card to be played, saved while a color
+								// selection overlay is displayed over black
+								// cards
 var lastPlayedCard = null; // card last played, on top of the played cards
-var willSayUnoOnNextCard = false; // true if the player pre-selected uno to send the 'say uno' event along with the played card
-var firstZeroTargetCid = null; // contains the first target cid when 0 played as last card and selecting the two opponents to switch cards
+var willSayUnoOnNextCard = false; // true if the player pre-selected uno to
+									// send the 'say uno' event along with the
+									// played card
+var firstZeroTargetCid = null; // contains the first target cid when 0 played
+								// as last card and selecting the two opponents
+								// to switch cards
 var clients = [];
 var msgBox = null;
 
@@ -24,8 +30,8 @@ function log(text)
 }
 
 /**
- * Gets the name of the client with the given ID
- * TODO make it more efficient
+ * Gets the name of the client with the given ID TODO make it more efficient
+ * 
  * @param cid
  * @returns {string} The name, if client is known, "???" otherwise
  */
@@ -48,17 +54,21 @@ function changeName()
 
 /**
  * Create a HTML DOM element string representing the given client's deck
- * @param client Client as {id, name}
+ * 
+ * @param client
+ *            Client as {id, name}
  * @returns {string}
  */
 function createDeck(client)
 {
-    console.log("BAGOLY 1", client.name);
-    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + ' (' + client.id + ')</span>' + (client.id === socket.id ? '<input type="text" id="ownName" value="' + client.name + '" onchange="changeName()">' : '') + ' - ' + (client.id === socket.id ? '<button class="say-uno-btn" id="say-uno-' + client.id + '" disabled>UNO!</button> <button class="sort-btn" id="sort-btn-' + client.id + '">Rendezzed mán!</button>' : '<a href="#" class="uno-report-btn" id="uno-report-' + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a>') + '<div class="deck-cards" id="deck-cards-' + client.id + '"></div></div>';
+    console.log("createDeck", client.name);
+    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><div class="deck-container"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + ' (' + client.id + ')</span>' + (client.id === socket.id ? '<input type="text" id="ownName" value="' + client.name + '" onchange="changeName()">' : '') + ' - ' + (client.id === socket.id ? '<button class="say-uno-btn" id="say-uno-' + client.id + '" disabled>UNO!</button> <button class="sort-btn" id="sort-btn-' + client.id + '">Rendezzed mán!</button>' : '<a href="#" class="uno-report-btn" id="uno-report-' + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a>') + '<div class="deck-cards" id="deck-cards-' + client.id + '"></div></div></div>';
 }
 
 /**
- * Creates a HTML DOM element string representing a color chooser overlay for black cards
+ * Creates a HTML DOM element string representing a color chooser overlay for
+ * black cards
+ * 
  * @returns {string}
  */
 function createColorChooserOverlay()
@@ -67,7 +77,9 @@ function createColorChooserOverlay()
 }
 
 /**
- * Creates a HTML DOM element string representing a deck chooser overlay for 0 cards
+ * Creates a HTML DOM element string representing a deck chooser overlay for 0
+ * cards
+ * 
  * @returns {string}
  */
 function createDeckChooserOverlay()
@@ -76,7 +88,9 @@ function createDeckChooserOverlay()
 }
 
 /**
- * Creates a HTML DOM element string representing an overlay for decks when choosing replacement deck with 0 card
+ * Creates a HTML DOM element string representing an overlay for decks when
+ * choosing replacement deck with 0 card
+ * 
  * @returns {string}
  */
 function createDeckChosantOverlay()
@@ -86,7 +100,9 @@ function createDeckChosantOverlay()
 
 /**
  * Creates a HTML DOM element string representing the given card
- * @param card Card given as {color, face}
+ * 
+ * @param card
+ *            Card given as {color, face}
  * @returns {string}
  */
 function createCard(card)
@@ -96,6 +112,7 @@ function createCard(card)
 
 /**
  * Gets the number of own cards
+ * 
  * @returns {number}
  */
 function getOwnCardCnt()
@@ -151,7 +168,9 @@ function sayUno()
 
 /**
  * Sends report missed UNO of another client to the server
- * @param cid ID of the client who is suspected to have forgotten to say UNO
+ * 
+ * @param cid
+ *            ID of the client who is suspected to have forgotten to say UNO
  */
 function reportMissedUno(cid)
 {
@@ -164,9 +183,12 @@ function reportMissedUno(cid)
 }
 
 /**
- * Updates DOM elements based on the given client list. Disappeared clients will be removed, new will be added,
- * the already existing clients will have their names and deck appearances' updated
- * @param newClientList Client list as an array of {id, name}
+ * Updates DOM elements based on the given client list. Disappeared clients will
+ * be removed, new will be added, the already existing clients will have their
+ * names and deck appearances' updated
+ * 
+ * @param newClientList
+ *            Client list as an array of {id, name}
  */
 function setNewClientList(newClientList)
 {
@@ -212,8 +234,8 @@ function setNewClientList(newClientList)
 }
 
 /**
- * Requests to play a card from the server, if possible
- * TODO starter card plays
+ * Requests to play a card from the server, if possible TODO starter card plays
+ * 
  * @param evt
  */
 function playCard(evt)
@@ -313,7 +335,8 @@ function playCard(evt)
                 }
                 else
                 {
-                    // There is only 1 other player in game, no effect of 0 card as last, just play it
+                    // There is only 1 other player in game, no effect of 0 card
+					// as last, just play it
 
                     // TODO ugly to create then remove overlay
                     $('.card-overlay').remove();
@@ -345,6 +368,7 @@ function playCard(evt)
 
 /**
  * Handles a card pull event
+ * 
  * @param cardPull
  */
 function pullCard(cardPull)
@@ -356,7 +380,8 @@ function pullCard(cardPull)
 
 function arrangeDecks()
 {
-    // Rotate decks so that own is first, then skip - to preserve the order of the turn around the table
+    // Rotate decks so that own is first, then skip - to preserve the order of
+	// the turn around the table
     let otherDecks = $('.deck');
     for (let currentDeck = otherDecks[0]; ! $(currentDeck).hasClass('own-deck'); )
     {
@@ -381,18 +406,31 @@ function arrangeDecks()
 
 $(function () {
     /**
-     * New client list msg
-     */
+	 * New client list msg
+	 */
     socket.on('client list', function(clientList)
     {
         console.log('client list', clientList);
         setNewClientList(clientList);
         arrangeDecks();
     });
+    
+    socket.on('turn direction', function(event)
+    {
+    	console.log("new direction is ", event);
+    	if (event == -1) 
+    	{
+    		$('#directionIndicator').text('\u2B6E');
+    	}
+    	if (event == 1) 
+    	{
+    		$('#directionIndicator').text('\u2B6F');
+    	}
+    });
 
     /**
-     * Someone pulled a card from the pull deck
-     */
+	 * Someone pulled a card from the pull deck
+	 */
     socket.on('card pulled', function(cardPull)
     {
         console.log('card pulled', cardPull);
@@ -404,8 +442,8 @@ $(function () {
     });
 
     /**
-     * Game completely restarted
-     */
+	 * Game completely restarted
+	 */
     socket.on('game restarted', function()
     {
         console.log('game restarted');
@@ -417,12 +455,12 @@ $(function () {
     });
 
     /**
-     * Current player changed (turn advanced) to given player as {cid}
-     */
+	 * Current player changed (turn advanced) to given player as {cid}
+	 */
     socket.on('current player', function(client)
     {
         console.log('current player', client);
-        currentPlayer = client;
+        currentPlayer = client;        
         $('.deck').removeClass('current-player');
         $('#deck-' + client.cid).addClass('current-player');
 
@@ -441,8 +479,9 @@ $(function () {
     });
 
     /**
-     * Someone legally played a card from his/her deck. Given as {cid, card{color, face}}
-     */
+	 * Someone legally played a card from his/her deck. Given as {cid,
+	 * card{color, face}}
+	 */
     socket.on('card played', function(event)
     {
         console.log('card played', event);
@@ -468,8 +507,8 @@ $(function () {
     });
 
     /**
-     * Two clients swapped their decks
-     */
+	 * Two clients swapped their decks
+	 */
     socket.on('deck swap', function(data)
     {
         console.log('deck swap', data);
@@ -480,8 +519,8 @@ $(function () {
     });
 
     /**
-     * A client has validly said UNO
-     */
+	 * A client has validly said UNO
+	 */
     socket.on('said uno', function(cid)
     {
         console.log('said uno', cid);
@@ -490,8 +529,9 @@ $(function () {
     });
 
     /**
-     * Response from the server when reported someone missing UNO, but (s)he did say before
-     */
+	 * Response from the server when reported someone missing UNO, but (s)he did
+	 * say before
+	 */
     socket.on('already said uno', function(cid)
     {
         console.log('already said uno', cid);
@@ -499,8 +539,8 @@ $(function () {
     });
 
     /**
-     * A player just ran out of cards, but can be called back for a turn
-     */
+	 * A player just ran out of cards, but can be called back for a turn
+	 */
     socket.on('player callbackable', function(cid)
     {
         console.log('player callbackable', cid);
@@ -508,8 +548,8 @@ $(function () {
     });
 
     /**
-     * A player is permanently out
-     */
+	 * A player is permanently out
+	 */
     socket.on('player out', function(cid)
     {
         console.log('player out', cid);
@@ -517,8 +557,8 @@ $(function () {
     });
 
     /**
-     * Pull deck has been reshuffled from the previously played cards
-     */
+	 * Pull deck has been reshuffled from the previously played cards
+	 */
     socket.on('deck reshuffled', function()
     {
         let previouslyPlayedCards = $('#playedCards').children().not(':last');
@@ -528,8 +568,8 @@ $(function () {
     });
 
     /**
-     * Someone successfully realized somebody else forgot to say UNO
-     */
+	 * Someone successfully realized somebody else forgot to say UNO
+	 */
     socket.on('missed uno busted', function (bustData)
     {
         console.log('missed uno busted', bustData);
@@ -543,8 +583,8 @@ $(function () {
     });
 
     /**
-     * Log message from the server to be displayed
-     */
+	 * Log message from the server to be displayed
+	 */
     socket.on('log', function(msg)
     {
         log(msg);

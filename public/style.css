@@ -108,17 +108,32 @@ body
 
 .deck
 {
-    border: 4px solid #000;
     padding: 0.2rem 0.2rem 0.2rem 1.8rem;
-    background: #ccc;
     position: absolute;
     top: 50%;
     left: 50%;
     transform-origin: center center;
-    box-shadow: -0.1rem -0.1rem 0.1rem rgba(0, 0, 0, 0.3), 0.2rem 0.2rem 0.2rem #000;
     text-align: center;
     max-width: 27rem;
     white-space: nowrap;
+}
+
+.current-player:not(.own-deck) .deck-container
+{
+	border-color: #f00;	
+	animation: zoominoutcurrentplayer 2s infinite;
+}
+
+@keyframes zoominoutcurrentplayer {
+    0% {
+        transform: scale(1,1);
+    }
+    50% {
+        transform: scale(1.14,1.14);
+    }
+    100% {
+        transform: scale(1,1);
+    }
 }
 
 .own-deck
@@ -128,11 +143,6 @@ body
     top: unset;
     max-width: 31rem;
     padding-left: 6.2rem;
-}
-
-.current-player
-{
-    border-color: #f00;
 }
 
 .card
@@ -397,12 +407,18 @@ body
 
 .own-deck.current-player
 {
+	border: 0.2rem solid #0f0;
     animation: next-player-deck-highlight 1s infinite;
 }
 
 .toggled
 {
     background: #0f0;
+}
+
+.gameDirectionIndicator
+{
+	font-size: 80px;
 }
 
 @keyframes msgBoxBlink

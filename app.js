@@ -360,7 +360,9 @@ function restartGame()
     // Starting player
     gameState.currentPlayerIdx = Math.floor(Math.random() * clients.length);
     io.emit('current player', {cid: clients[gameState.currentPlayerIdx].id});
-
+    
+    console.log('Signalizing initial turn direction : ',gameState.turnDirection);
+    io.emit('turn direction',gameState.turnDirection);
     console.log('Ready with new game');
 }
 
@@ -589,6 +591,7 @@ io.on('connection', function(socket)
         {
             case types.FACE.TURNAROUND:
                 gameState.turnDirection *= -1;
+                io.emit('turn direction',gameState.turnDirection);
                 break;
             case types.FACE.PLUS2:
                 gameState.currentCardPullCnt += 2;
