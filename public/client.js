@@ -156,6 +156,17 @@ function sayUno()
     // Pre-click UNO
     if (ownCardCnt === 2)
     {
+    	var hasValidCardToPlay= false;
+    	$('#deck-cards-' + currentPlayer.cid).children('.card').each ( function(index, card) {		
+    		let cardObj = {color: $(card).data('color'), face: $(card).data('face')};	
+    		hasValidCardToPlay = hasValidCardToPlay  || types.cardCanBePlayedOn(cardObj, lastPlayedCard);
+    	});
+    	if (!hasValidCardToPlay) 
+    	{
+    		console.log("No point to say UNO with two cards if you cannot play any of them");
+            return;	
+    	}
+        
         willSayUnoOnNextCard = true;
         $('#say-uno-' + socket.id).addClass("toggled");
     }
