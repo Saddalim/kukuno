@@ -6,6 +6,7 @@ var io = require('socket.io')(http);
 var types = require('./public/types.js');
 
 var clients = [];
+var wasDeniedButCanPutDenyAgainBeforeNextPlayerPutAnythingPlayerId = 0;
 
 const missedUnoCardCnt = 3;
 
@@ -506,11 +507,25 @@ io.on('connection', function(socket)
             }
             else
             {
-                console.log('But (s)he is not the current player or card cannot be async played :(');
-                return;
+                //check for deny
+                if ((cardToPlay.face  ===10) 
+                	&& (getTopPlayedCard().face === 10)
+                	&& (wasDeniedButCanPutDenyAgainBeforeNextPlayerPutAnythingPlayerId == clients[gameState.currentPlayerIdx].id))
+                 		{
+                			console.log('You can deny you deny. Great job');
+                			wasDeniedButCanPutDenyAgainBeforeNextPlayerPutAnythingPlayerId = 0;
+                			asyncPlay = true;                		
+                 		} 
+                else 
+                 		{
+                			console.log('But (s)he is not the current player or card cannot be async played :(');
+                			wasDeniedButCanPutDenyAgainBeforeNextPlayerPutAnythingPlayerId = 0;
+                			return;
+                 		}
             }
-
         }
+
+        wasDeniedButCanPutDenyAgainBeforeNextPlayerPutAnythingPlayerId = 0;
         if (! gameState.players.hasOwnProperty(socket.id))
         {
             console.log('But (s)he does not have a deck :(');
@@ -601,6 +616,7 @@ io.on('connection', function(socket)
                 break;
             case types.FACE.DENY:
                 advanceTurn();
+                wasDeniedButCanPutDenyAgainBeforeNextPlayerPutAnythingPlayerId = socket.id;
                 break;
         }
 

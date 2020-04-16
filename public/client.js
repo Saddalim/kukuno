@@ -286,8 +286,17 @@ function playCard(evt)
         }
         else
         {
-            console.error("Not current player and card cannot be async played: ", card, lastPlayedCard);
-            return;
+
+        	if ((card.face===10) && (lastPlayedCard.face ===10)) 
+        	{
+        		console.log('deny the previous deny ');      
+        		asyncPlay = true;
+        	} 
+        	else 
+        	{
+        		console.error("Not current player and card cannot be async played: ", card, lastPlayedCard);
+        		return;        	
+        	}
         }
     }
     if (! asyncPlay && ! types.cardCanBePlayedOn(card, lastPlayedCard))

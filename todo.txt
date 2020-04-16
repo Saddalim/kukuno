@@ -1,4 +1,3 @@
-- kimaradszra csak ugyanolyan kimaradszot lehet rátenni, pedig a következő ember bármilyen rátehet async
 - aki hamarabb rak, az kezd (mi van ha senki sem tud?)
 - aki hamarabb rak, az a második (mi van ha senki sem tud?)
 - race condition, async play card-nál
