@@ -508,9 +508,9 @@ io.on('connection', function(socket)
             else
             {
                 //check for deny
-                if ((cardToPlay.face  ===10) 
-                	&& (getTopPlayedCard().face === 10)
-                	&& (wasDeniedButCanPutDenyAgainBeforeNextPlayerPutAnythingPlayerId == clients[gameState.currentPlayerIdx].id))
+                if ((cardToPlay.face === types.FACE.DENY)
+                	&& (getTopPlayedCard().face === types.FACE.DENY)
+                	&& (wasDeniedButCanPutDenyAgainBeforeNextPlayerPutAnythingPlayerId === clients[gameState.currentPlayerIdx].id))
                  		{
                 			console.log('You can deny you deny. Great job');
                 			wasDeniedButCanPutDenyAgainBeforeNextPlayerPutAnythingPlayerId = 0;

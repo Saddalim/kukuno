@@ -10,7 +10,7 @@
 - saját játékos paklija legfelül legyen
 - lehet unot mondani 2 kartyanal ha egyiket se tudod letenni
 - 2 játékosnál vége a játéknak
-- több üzenet egyszerre kiírja hogy <hr>
+- több üzenet egyszerre többször villog
 - karakterkódolás visszaforgatónál?
 - nézőknek minuszba megy a lapszámláló
 

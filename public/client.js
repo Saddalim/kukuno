@@ -145,8 +145,6 @@ function sortDeck()
  */
 function sayUno()
 {
-
-	
     let ownCardCnt = getOwnCardCnt();
     if (ownCardCnt > types.UNO_MAX_CARD_CNT)
     {
@@ -287,7 +285,7 @@ function playCard(evt)
         else
         {
 
-        	if ((card.face===10) && (lastPlayedCard.face ===10)) 
+        	if ((card.face === types.FACE.DENY) && (lastPlayedCard.face === types.FACE.DENY))
         	{
         		console.log('deny the previous deny ');      
         		asyncPlay = true;
