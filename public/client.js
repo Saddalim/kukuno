@@ -62,7 +62,7 @@ function changeName()
 function createDeck(client)
 {
     console.log("createDeck", client.name);
-    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><div class="deck-container"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + ' (' + client.id + ')</span>' + (client.id === socket.id ? '<input type="text" id="ownName" value="' + client.name + '" onchange="changeName()">' : '') + ' - ' + (client.id === socket.id ? '<button class="say-uno-btn" id="say-uno-' + client.id + '" disabled>UNO!</button> <button class="sort-btn" id="sort-btn-' + client.id + '">Rendezzed mán!</button>' : '<a href="#" class="uno-report-btn" id="uno-report-' + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a>') + '<div class="deck-cards" id="deck-cards-' + client.id + '"></div></div></div>';
+    return '<div class="deck' + (client.id === socket.id ? ' own-deck' : '') + '" id="deck-' + client.id + '" data-cid="' + client.id + '"><div class="deck-container"><div class="deck-header"><span id="deck-name-' + client.id + '" class="deck-name">' + client.name + ' (' + client.id + ')</span>' + (client.id === socket.id ? '<input type="text" id="ownName" value="' + client.name + '" onchange="changeName()">' : '') + ' - ' + (client.id === socket.id ? '<button class="say-uno-btn" id="say-uno-' + client.id + '" disabled>UNO!</button> <button class="sort-btn" id="sort-btn-' + client.id + '">Rendezzed mán!</button>' : '<a href="#" class="uno-report-btn" id="uno-report-' + client.id + '" data-cid="' + client.id + '">Nem mondta, hogy UNO!</a>') + '</div><div class="deck-cards" id="deck-cards-' + client.id + '"></div></div></div>';
 }
 
 /**
@@ -436,13 +436,13 @@ $(function () {
     socket.on('turn direction', function(event)
     {
     	console.log("new direction is ", event);
-    	if (event == 1) 
+    	if (event === 1)
     	{
-    		$('#directionIndicator').text('\u21BA').removeClass('rotate-right').addClass('rotate-left');
+    		$('#directionIndicator').html('<i class="material-icons">sync</i>').removeClass('rotate-right').addClass('rotate-left');
     	}
-    	if (event == -1) 
+    	if (event === -1)
     	{
-    		$('#directionIndicator').text('\u21BB').removeClass('rotate-left').addClass('rotate-right');
+    		$('#directionIndicator').html('<i class="material-icons">sync</i>').removeClass('rotate-left').addClass('rotate-right');
     	}
     });
 

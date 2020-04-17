@@ -361,6 +361,8 @@ function restartGame()
     // Starting player
     gameState.currentPlayerIdx = Math.floor(Math.random() * clients.length);
     io.emit('current player', {cid: clients[gameState.currentPlayerIdx].id});
+
+    gameState.turnDirection = Math.random() >= 0.5 ? 1 : -1;
     
     console.log('Signalizing initial turn direction : ',gameState.turnDirection);
     io.emit('turn direction',gameState.turnDirection);
