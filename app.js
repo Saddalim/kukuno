@@ -12,12 +12,13 @@ const missedUnoCardCnt = 3;
 
 const secretCard = {color: types.COLOR.SECRET, face: types.FACE.SECRET};
 const blankGameState = {
-    currentPlayerIdx: null,
-    players: {},
-    deck: [],
-    playedCards: [],
-    turnDirection: 1,
-    currentCardPullCnt: 0
+    currentPlayerIdx: null, // index in the clients[] array of the current player
+    players: {},            // currently connected clients
+    deck: [],               // main deck from which players can draw cards
+    playedCards: [],        // already played cards, in order with the first being the oldest that was played
+    discardedCards: [],     // cards that were gone out of play, e.g. because a player holding them was disconnected
+    turnDirection: 1,       // current direction of the turn
+    currentCardPullCnt: 0   // count of how many cards will have to be drawn during a +2/+4 streak
 };
 const blankPlayerState = {
     state: types.PLAYER_STATE.PLAYING,
@@ -134,7 +135,7 @@ function getClientWithId(id)
 /**
  * Remove a given client from the known clients. Does not send update to clients!
  * @param id ID of the client to be disconnected
- * @returns {null}
+ * @returns {boolean} true, if the id given was valid and the client has been removed successfully
  */
 function disconnectClientWithId(id)
 {
@@ -147,9 +148,15 @@ function disconnectClientWithId(id)
             break;
         }
     }
-    client = clients.splice(i, 1);
+    if (i === clients.length) return false;
+
+    gameState.discardedCards = gameState.discardedCards.concat(gameState.players[id].deck);
+    clients.splice(i, 1);
+    delete gameState.players[id];
+
     if (gameState.currentPlayerIdx === i) advanceTurn();
-    return client;
+
+    return true;
 }
 
 /**
@@ -365,7 +372,7 @@ function restartGame()
     gameState.turnDirection = Math.random() >= 0.5 ? 1 : -1;
     
     console.log('Signalizing initial turn direction : ',gameState.turnDirection);
-    io.emit('turn direction',gameState.turnDirection);
+    io.emit('turn direction', gameState.turnDirection);
     console.log('Ready with new game');
 }
 
@@ -482,8 +489,7 @@ io.on('connection', function(socket)
     socket.on('disconnect', function()
     {
         console.log('user has disconnected');
-        var client = disconnectClientWithId(socket.id);
-        if (client != null)
+        if (disconnectClientWithId(socket.id))
         {
             io.emit('client list', getPublishableClientList());
         }
@@ -693,6 +699,8 @@ io.on('connection', function(socket)
         if (gameState.deck.length === 0)
         {
             let cards = gameState.playedCards.splice(0, gameState.playedCards.length - 1);
+            cards = cards.concat(gameState.discardedCards);
+            gameState.discardedCards.length = 0; // clear discarded cards
             // Cannot simply put back, black cards need to be renewed as black :)
             cards.forEach(card => {if (card.face === types.FACE.PLUS4 || card.face === types.FACE.COLORSWITCH) card.color = types.COLOR.BLACK});
             gameState.deck = cards;
@@ -796,6 +804,11 @@ io.on('connection', function(socket)
         {
             io.to(socket.id).emit('current player', {cid: clients[gameState.currentPlayerIdx].id});
         }
+
+        io.to(socket.id).emit('turn direction', gameState.turnDirection);
+
+        // Send all played cards to new client
+        gameState.playedCards.forEach(card => io.to(socket.id).emit('card played', {cid: null, card: card}));
 
         // TODO assign random name at the first place
         if (renameClient(socket.id, getRandomName()))

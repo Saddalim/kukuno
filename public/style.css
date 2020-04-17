@@ -260,7 +260,7 @@ body
 {
     font-size: 1.5rem;
     line-height: 1.5rem;
-    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-width: 0.1rem;
     -webkit-text-stroke-color: #000;
 }
 
@@ -297,6 +297,23 @@ body
     height: 8rem;
     line-height: 8rem;
     -webkit-text-stroke-width: 4px;
+}
+
+.own-deck .card-face-center i, #table-decks .card-face-center i
+{
+    font-size: 5rem;
+    line-height: 5rem;
+}
+
+.own-deck .card-face-top i, #table-decks .card-face-top i, .own-deck .card-face-bottom i, #table-decks .card-face-bottom i
+{
+    font-size: 2rem;
+    line-height: 2rem;
+    margin-left: -0.1rem;
+    margin-top: 0.3rem;
+    font-weight: bold;
+    -webkit-text-stroke-width: 0.08rem;
+    -webkit-text-stroke-color: #000;
 }
 
 .own-deck .card-inner, #table-decks .card-inner
@@ -471,12 +488,12 @@ body
     color: rgba(0, 0, 0, 0.08);
 }
 
-.rotate-right
+.rotate-right i
 {
 	-webkit-animation: directionAnimRight 15s infinite linear;
 }
 
-.rotate-left
+.rotate-left i
 {
 	-webkit-animation: directionAnimLeft 15s infinite linear;
 }

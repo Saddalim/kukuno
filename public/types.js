@@ -49,7 +49,7 @@
         {
             case this.FACE.SECRET: return "?";
             case this.FACE.DENY: return '\u2298';
-            case this.FACE.TURNAROUND: return "\u2B6E";
+            case this.FACE.TURNAROUND: return "<i class=\"material-icons\">sync</i>";
             case this.FACE.PLUS2: return "+2";
             case this.FACE.COLORSWITCH: return "\u25D5";
             case this.FACE.PLUS4: return "+4";

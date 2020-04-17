@@ -1,5 +1,5 @@
 var socket = io({type: 'client'});
-var deckSize = 0;
+var deckSize = types.CARD_CNT;
 var currentPlayer = {cid: null};
 var cardPendingPlayed = null; // card to be played, saved while a color
 								// selection overlay is displayed over black
