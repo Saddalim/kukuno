@@ -438,11 +438,11 @@ $(function () {
     	console.log("new direction is ", event);
     	if (event == -1) 
     	{
-    		$('#directionIndicator').text('\u2B6E');
+    		$('#directionIndicator').text('\u21BA').removeClass('rotate-right').addClass('rotate-left');
     	}
     	if (event == 1) 
     	{
-    		$('#directionIndicator').text('\u2B6F');
+    		$('#directionIndicator').text('\u21BB').removeClass('rotate-left').addClass('rotate-right');
     	}
     });
 

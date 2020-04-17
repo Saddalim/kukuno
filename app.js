@@ -377,13 +377,23 @@ function advanceTurn(depth = 0)
         io.emit('end game');
         return;
     }
+    
 
     if (depth === 0)
     {
         console.log("Advance turn, curr idx: " + gameState.currentPlayerIdx + ", direction: ", gameState.turnDirection);
     }
-
-    if (gameState.currentPlayerIdx === null && clients.length > 0) gameState.currentPlayerIdx = 0;
+    
+    if (clients.length === 0)
+    {
+    	console.log("No players present, not advancing turn.");
+    	return;
+    }
+    	
+    if (gameState.currentPlayerIdx === null && clients.length > 0) 
+    {
+    	gameState.currentPlayerIdx = 0;
+    }
     else
     {
         gameState.currentPlayerIdx += gameState.turnDirection;
