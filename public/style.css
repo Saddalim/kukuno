@@ -428,19 +428,19 @@ body
     top: 50%;
     left: 50%;
     color: rgba(0,0,0,0.1);
-	font-size: 50rem;
-	line-height: 50rem;
+	font-size: 40rem;
+	line-height: 40rem;
 }
 
 
 .rotate-right
 {
-	animation: directionAnimRight 10s infinite linear;
+	-webkit-animation: directionAnimRight 15s infinite linear;
 }
 
 .rotate-left
 {
-	animation: directionAnimLeft 10s infinite linear;
+	-webkit-animation: directionAnimLeft 15s infinite linear;
 }
 
 
