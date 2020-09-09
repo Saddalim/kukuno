@@ -121,6 +121,18 @@ function getOwnCardCnt()
 }
 
 /**
+ * Gets number of players currently in play (excluding players having 0 cards but still recallable)
+ */
+function getNumberOfPlayersInPlay()
+{
+    let cnt = 0;
+    return $('.deck').each(function() {
+        if ($(this).find('.card').length > 0) ++cnt;
+    });
+    return cnt;
+}
+
+/**
  * Sort my deck.
  */
 function sortDeck()
@@ -322,55 +334,63 @@ function playCard(evt)
     // Handle 0 deck chooser overlay
     if (card.face === 0)
     {
-        domElem.append(createDeckChooserOverlay());
-        $('.deck:not(.own-deck)').filter(function(idx, elem) {return $(elem).find('.card').length > 0}).append(createDeckChosantOverlay());
-        $('.deck-chooser-overlay').click(function(evt)
+        if (getNumberOfPlayersInPlay() > 2)
         {
-            let domElem = $(evt.target);
-            let parents = domElem.parents('.deck');
-            if (parents.length < 1)
+            domElem.append(createDeckChooserOverlay());
+            $('.deck:not(.own-deck)').filter(function(idx, elem) {return $(elem).find('.card').length > 0}).append(createDeckChosantOverlay());
+            $('.deck-chooser-overlay').click(function(evt)
             {
-                console.error("Could not find parent deck of overlay", domElem);
-                return;
-            }
-            let deckDom = $(parents[0]);
-
-            if (getOwnCardCnt() === 1)
-            {
-                if ($('.deck:not(.own-deck)').filter(function(idx, elem) {return $(elem).find('.card').length > 0}).length > 1)
+                let domElem = $(evt.target);
+                let parents = domElem.parents('.deck');
+                if (parents.length < 1)
                 {
-                    // At least 2 other players, choose who to swap
+                    console.error("Could not find parent deck of overlay", domElem);
+                    return;
+                }
+                let deckDom = $(parents[0]);
 
-                    domElem.toggleClass('chosen-double-zero');
-                    let choices = $('.chosen-double-zero');
-                    if (choices.length === 2)
+                if (getOwnCardCnt() === 1)
+                {
+                    if ($('.deck:not(.own-deck)').filter(function(idx, elem) {return $(elem).find('.card').length > 0}).length > 1)
                     {
-                        // Got both
-                        card.cid1 = $(choices[0]).parents('.deck').data('cid');
-                        card.cid2 = $(choices[1]).parents('.deck').data('cid');
+                        // At least 2 other players, choose who to swap
+
+                        domElem.toggleClass('chosen-double-zero');
+                        let choices = $('.chosen-double-zero');
+                        if (choices.length === 2)
+                        {
+                            // Got both
+                            card.cid1 = $(choices[0]).parents('.deck').data('cid');
+                            card.cid2 = $(choices[1]).parents('.deck').data('cid');
+                            socket.emit('play card', card);
+                        }
+                    }
+                    else
+                    {
+                        // There is only 1 other player in game, no effect of 0 card
+                        // as last, just play it
+
+                        // TODO ugly to create then remove overlay
+                        $('.card-overlay').remove();
                         socket.emit('play card', card);
                     }
                 }
                 else
                 {
-                    // There is only 1 other player in game, no effect of 0 card
-					// as last, just play it
+                    // Simple play of zero card mid game
 
-                    // TODO ugly to create then remove overlay
                     $('.card-overlay').remove();
+                    card.cid = deckDom.data('cid');
                     socket.emit('play card', card);
                 }
-            }
-            else
-            {
-                // Simple play of zero card mid game
 
-                $('.card-overlay').remove();
-                card.cid = deckDom.data('cid');
-                socket.emit('play card', card);
-            }
-
-        });
+            });
+        }
+        else
+        {
+            // 0 as last card if only 1 player is active excluding the current user has no special abilties
+            socket.emit('play card', card);
+        }
         return;
     }
 

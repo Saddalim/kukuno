@@ -317,6 +317,19 @@ function handleDeckSwap(cid1, cid2)
 }
 
 /**
+ * Gets number of players currently in play (including players having 0 cards but still recallable)
+ */
+function getNumberOfPlayersInPlay()
+{
+    let cnt = 0;
+    for (let [cid, player] of Object.entries(gameState.players))
+    {
+        if (player.state !== types.PLAYER_STATE.OUT) ++cnt;
+    }
+    return cnt;
+}
+
+/**
  * Completely discards current game state, and starts a new
  */
 function restartGame()
@@ -592,12 +605,17 @@ io.on('connection', function(socket)
             if (gameState.players[socket.id].deck.length === 1)
             {
                 // Swap card as last
-                console.log(getNameOfClient(socket.id) + ' wants ' + getNameOfClient(cardToPlay.cid1) + " and " + getNameOfClient(cardToPlay.cid2) + " to change");
-                if (! types.canBeTargetOfSwap(gameState.players[cardToPlay.cid1].state)
-                    || ! types.canBeTargetOfSwap(gameState.players[cardToPlay.cid2].state))
+
+                // No special effect if only 1 player is left
+                if (getNumberOfPlayersInPlay() > 2)
                 {
-                    console.log("But this is only possible between players still in play; " + getNameOfClient(cardToPlay.cid1) + " is " + types.playerStateToString(gameState.players[cardToPlay.cid1].state) + " (" + gameState.players[cardToPlay.cid1].state + "), " + getNameOfClient(cardToPlay.cid2) + " is " + types.playerStateToString(gameState.players[cardToPlay.cid2].state) + "(" + gameState.players[cardToPlay.cid2].state + ")");
-                    return;
+                    console.log(getNameOfClient(socket.id) + ' wants ' + getNameOfClient(cardToPlay.cid1) + " and " + getNameOfClient(cardToPlay.cid2) + " to change");
+                    if (! types.canBeTargetOfSwap(gameState.players[cardToPlay.cid1].state)
+                        || ! types.canBeTargetOfSwap(gameState.players[cardToPlay.cid2].state))
+                    {
+                        console.log("But this is only possible between players still in play; " + getNameOfClient(cardToPlay.cid1) + " is " + types.playerStateToString(gameState.players[cardToPlay.cid1].state) + " (" + gameState.players[cardToPlay.cid1].state + "), " + getNameOfClient(cardToPlay.cid2) + " is " + types.playerStateToString(gameState.players[cardToPlay.cid2].state) + "(" + gameState.players[cardToPlay.cid2].state + ")");
+                        return;
+                    }
                 }
             }
             else
@@ -645,8 +663,11 @@ io.on('connection', function(socket)
         {
             if (gameState.players[socket.id].deck.length === 0)
             {
-                // Swap card as last
-                handleDeckSwap(cardToPlay.cid1, cardToPlay.cid2);
+                if (getNumberOfPlayersInPlay() > 2)
+                {
+                    // Swap card as last
+                    handleDeckSwap(cardToPlay.cid1, cardToPlay.cid2);
+                }
             }
             else
             {
