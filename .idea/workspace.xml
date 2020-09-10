@@ -2,11 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="895c957e-4e9d-4aed-b2cc-d96abbcc99f3" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/public/admin.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/admin.html" beforeDir="false" afterPath="$PROJECT_DIR$/admin.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/admin.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/admin.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/public/client.js" beforeDir="false" afterPath="$PROJECT_DIR$/public/client.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -83,7 +80,7 @@
       <workItem from="1599723092891" duration="59000" />
       <workItem from="1599723185488" duration="99000" />
       <workItem from="1599723327572" duration="1090000" />
-      <workItem from="1599736530117" duration="9719000" />
+      <workItem from="1599736530117" duration="10210000" />
     </task>
     <servers />
   </component>

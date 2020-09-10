@@ -103,6 +103,9 @@ dist
 # TernJS port file
 .tern-port
 
+#Mert Jani IDEAban dolgozik:
+.idea/
+
 #Mert Dani Eclipsben dolgozik:
 .project
 .settings

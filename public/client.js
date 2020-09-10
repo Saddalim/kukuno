@@ -382,7 +382,13 @@ function playCard(evt)
     // Handle 0 deck chooser overlay
     if (card.face === 0)
     {
-        if (getNumberOfPlayersInPlay() > 2)
+        if (getOwnCardCnt() === 1 && getNumberOfPlayersInPlay() <= 2)
+        {
+            console.log("Playing 0 without special effects, as # of players left is ", getNumberOfPlayersInPlay(), " and I have ", getOwnCardCnt(), "cards left");
+            // 0 as last card if only 1 player is active excluding the current user has no special abilties
+            socket.emit('play card', card);
+        }
+        else
         {
             domElem.append(createDeckChooserOverlay());
             $('.deck:not(.own-deck)').filter(function(idx, elem) {return $(elem).find('.card').length > 0}).append(createDeckChosantOverlay());
@@ -433,11 +439,6 @@ function playCard(evt)
                 }
 
             });
-        }
-        else
-        {
-            // 0 as last card if only 1 player is active excluding the current user has no special abilties
-            socket.emit('play card', card);
         }
         return;
     }
