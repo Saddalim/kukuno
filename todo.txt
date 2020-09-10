@@ -1,18 +1,19 @@
 - aki hamarabb rak, az kezd (mi van ha senki sem tud?)
 - aki hamarabb rak, az a második (mi van ha senki sem tud?)
-- race condition, async play card-nál
-- asztalhoz normális háttér (textúra)
 - hány lap van, elfedni (esetleg ha több mint 10 ugyanaz nem kell több)
 - te jössz szebben jelezve
 - lehet bill-ről is játszani (jobbra-balra , space)
-- jelölni irányt merre megy a kör
-- fent a játékosok listája div már nem kell
-- saját játékos paklija legfelül legyen
-- lehet unot mondani 2 kartyanal ha egyiket se tudod letenni
-- 2 játékosnál vége a játéknak
 - több üzenet egyszerre többször villog
-- karakterkódolás visszaforgatónál?
-- nézőknek minuszba megy a lapszámláló
+- éppen visszahívott emberen nem látszik hogy ő jön (nem villognak a lapjai, hisz nincsenek)
+- animáció cseréhez
+- körbecsere
+
+admin:
+- ember kirakása a játékból (maradjon bent csak ne játsszon)
+- ember kirakása a szerverről
+- kártya odaadása valakinek a pakliból
+- kártya elvevése valakitől a pakliba
+- kézben lévő kártyák újraküldése (ne kelljen új játék ha bebuggol)
 
 bónusz:
 - cset

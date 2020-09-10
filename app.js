@@ -150,9 +150,16 @@ function disconnectClientWithId(id)
     }
     if (i === clients.length) return false;
 
-    gameState.discardedCards = gameState.discardedCards.concat(gameState.players[id].deck);
+    if (gameState.players.hasOwnProperty(id))
+    {
+        if (gameState.players[id].hasOwnProperty('deck') && gameState.players[id].deck.length > 0)
+        {
+            gameState.discardedCards = gameState.discardedCards.concat(gameState.players[id].deck);
+        }
+        delete gameState.players[id];
+    }
+
     clients.splice(i, 1);
-    delete gameState.players[id];
 
     if (gameState.currentPlayerIdx === i) advanceTurn();
 

@@ -150,6 +150,53 @@ function sortDeck()
 	});
 	console.log(toSort);
 	toSort.detach().prependTo($(".own-deck").find(".deck-cards"));
+	overlapOwnDeck();
+}
+
+/**
+ * Calculates overlap and arranges own deck so that they fit into their container
+ */
+function overlapOwnDeck(highlightedCard = null)
+{
+    console.log('overlapOwnDeck', highlightedCard);
+    let cardContainer = $('.own-deck .deck-cards')[0];
+    let cards = $(cardContainer).find('.card');
+    if (cards.length < 1) return;
+
+    let cardWidth = cards[0].offsetWidth;
+    let cardsWidth = cardWidth * cards.length;
+    let containerWidth = cardContainer.clientWidth;
+    let diff = cardsWidth - containerWidth;
+    let offset = diff / (cards.length - 1);
+    console.log('overlapOwnDeck', 'Wctnr', containerWidth, 'Wcards', cardsWidth, 'diff', diff, 'offset', offset);
+
+    let pastHighlightedCard = false;
+    let secondGroupStartOffset = 0;
+    let secondGroupOffset = 0;
+    let secondGroupStartId = 0;
+
+    for (let i = 0; i < cards.length; ++i)
+    {
+        /*
+        if (cards[i] === highlightedCard)
+        {
+            let secondGroupCount = cards.length - i - 1;
+            let secondGroupCardsWidth = cardWidth * secondGroupCount;
+            let consumedWidth = offset * i + cardWidth;
+            secondGroupStartOffset = consumedWidth;
+            let remainingWidth = containerWidth - consumedWidth;
+            let secondGroupDiff = secondGroupCardsWidth - remainingWidth;
+            secondGroupOffset = secondGroupDiff / (secondGroupCount - 1);
+            console.log("Got highlighted card", 'idx', i, '2ndcnt', secondGroupCount, 'cnsm', consumedWidth, 'rmng', remainingWidth);
+            secondGroupStartId = i;
+            pastHighlightedCard = true;
+        }
+
+         */
+
+        let realOffset = pastHighlightedCard ? (secondGroupStartOffset + (secondGroupOffset * i - secondGroupStartId)) : (offset * i);
+        $(cards[i]).css('transform', 'translateX(-' + (realOffset) + 'px)');
+    }
 }
 
 /**
@@ -413,7 +460,29 @@ function pullCard(cardPull)
 {
     let cardElem = $(createCard(cardPull.card));
     $('#deck-cards-' + cardPull.cid).append(cardElem);
-    cardElem.click(playCard);
+    if (cardPull.cid === socket.id)
+    {
+        cardElem.click(playCard);
+        cardElem.mouseleave(function(evt) {console.log('mouseleave', $(evt.target))});
+        /*
+        cardElem.mouseenter(function(evt) {console.log('mouseenter', $(evt.target).parents('.card'))});
+
+        cardElem.mouseover(function(evt) {console.log('mouseover', $(evt.target).data('face'))});
+        cardElem.mouseout(function(evt) {console.log('mouseout', $(evt.target).data('face'))});
+        cardElem.hover(function(evt) {console.log('hover in', $(evt.target).data('face'))}, function(evt) {console.log('hover out', $(evt.target).data('face'))});
+        */
+
+        cardElem.mouseenter(function(evt)
+        {
+            overlapOwnDeck($(evt.target).hasClass('card') ? evt.target : $(evt.target).parents('.card')[0]);
+        });
+        cardElem.mouseleave(function(evt)
+        {
+            overlapOwnDeck(null);
+        });
+        overlapOwnDeck();
+    }
+
 }
 
 function arrangeDecks()
@@ -535,6 +604,7 @@ $(function () {
             {
                 cardPendingPlayed.remove();
                 cardPendingPlayed = null;
+                overlapOwnDeck();
             }
         }
         else
@@ -554,6 +624,10 @@ $(function () {
         $('#deck-cards-' + data.deck2.cid).empty();
         data.deck1.deck.forEach(card => pullCard({cid: data.deck1.cid, card: card}));
         data.deck2.deck.forEach(card => pullCard({cid: data.deck2.cid, card: card}));
+        if (data.deck1.cid === socket.id || data.deck2.cid === socket.id)
+        {
+            overlapOwnDeck();
+        }
     });
 
     /**

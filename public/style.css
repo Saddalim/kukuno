@@ -88,8 +88,11 @@ body
 
 .own-deck .card:hover
 {
+    /*
     transform: scale(1.02) translate(-1.7rem, -3.2rem) rotate(5deg);
  	transition: ease-in-out 0.15s;
+ 	*/
+    z-index: 1000;
 }
 
 .own-deck .deck-name
@@ -128,6 +131,12 @@ body
     transition: 0.2s ease-in-out;
 }
 
+.own-deck .deck-cards
+{
+    margin: 0.5rem;
+    display: flex;
+}
+
 .deck-cards .card
 {
     display: inline-block;
@@ -148,14 +157,19 @@ body
 
 .deck
 {
-    padding: 0.2rem 0.2rem 0.2rem 1.8rem;
+    padding: 0.2rem;
     position: absolute;
     top: 50%;
     left: 50%;
     transform-origin: center center;
     text-align: center;
-    max-width: 27rem;
     white-space: nowrap;
+}
+
+.deck:not(.own-deck)
+{
+    max-width: 27rem;
+    padding-left: 1.8rem;
 }
 
 .current-player:not(.own-deck) .deck-cards
@@ -181,8 +195,8 @@ body
     transform: translate(-50%, 0);
     bottom: 5vh;
     top: unset;
-    max-width: 31rem;
-    padding-left: 6.2rem;
+    max-width: 90%;
+    /*padding-left: 6.2rem;*/
 }
 
 .card
@@ -266,7 +280,11 @@ body
 
 .own-deck .card
 {
-    margin-left: -4.5rem;
+    /*margin-left: -4.5rem;*/
+    display: initial;
+    margin: initial;
+    flex: 0 0 8rem;
+    transition: transform 0.25s;
 }
 
 .own-deck .card, #table-decks .card
