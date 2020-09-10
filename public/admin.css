@@ -1,0 +1,47 @@
+#actions
+{
+    color: #ddd;
+}
+
+#actions a
+{
+    color: #8e8eca;
+}
+
+.cardColorGroup
+{
+    display: inline-block;
+    border: 1px solid #ccc;
+}
+
+.clientBox
+{
+    display: block;
+}
+
+.color--1
+{
+    background: #000;
+    color: #fff;
+}
+
+.color-0
+{
+    background: #f00;
+}
+
+.color-1
+{
+    background: #0f0;
+}
+
+.color-2
+{
+    background: #00f;
+    color: #fff;
+}
+
+.color-3
+{
+    background: #ff0;
+}

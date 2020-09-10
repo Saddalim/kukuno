@@ -6,9 +6,11 @@ var io = require('socket.io')(http);
 var types = require('./public/types.js');
 
 var clients = [];
+var admins = [];
 var wasDeniedButCanPutDenyAgainBeforeNextPlayerPutAnythingPlayerId = 0;
 
 const missedUnoCardCnt = 3;
+const maxPlayerNameLength = 50;
 
 const secretCard = {color: types.COLOR.SECRET, face: types.FACE.SECRET};
 const blankGameState = {
@@ -111,7 +113,7 @@ function renameClient(id, name)
     {
         if (clients[i].id === id)
         {
-            clients[i].name = name;
+            clients[i].name = name.substring(0, maxPlayerNameLength);
             return true;
         }
     }
@@ -305,6 +307,19 @@ function getPublishableClientList()
 }
 
 /**
+ * Sets the state of the player with the given CID to the given state and emits an update to admins
+ * @param cid
+ * @param state
+ */
+function setPlayerState(cid, state)
+{
+    gameState.players[cid].state = state;
+    admins.forEach(client => {
+        io.to(client.socket.id).emit('client state changed', {cid: cid, state: state})
+    });
+}
+
+/**
  * Swaps the decks of the two given players and emits the necessary events
  * @param {number} cid1
  * @param {number} cid2
@@ -317,8 +332,8 @@ function handleDeckSwap(cid1, cid2)
     gameState.players[cid2].deck = temp;
 
     // Swapping decks discards UNOs said earlier!
-    gameState.players[cid1].state = types.PLAYER_STATE.PLAYING;
-    gameState.players[cid2].state = types.PLAYER_STATE.PLAYING;
+    setPlayerState(cid1, types.PLAYER_STATE.PLAYING);
+    setPlayerState(cid2, types.PLAYER_STATE.PLAYING);
 
     hideAndEmitDeckSwap({deck1: {cid: cid1, deck: gameState.players[cid1].deck}, deck2: {cid: cid2, deck: gameState.players[cid2].deck}}, clients);
 }
@@ -347,7 +362,10 @@ function restartGame()
     io.emit('game restarted');
 
     gameState = JSON.parse(JSON.stringify(blankGameState));
-    clients.forEach(client => gameState.players[client.id] = JSON.parse(JSON.stringify(blankPlayerState)));
+    clients.forEach(client => {
+        gameState.players[client.id] = JSON.parse(JSON.stringify(blankPlayerState));
+        setPlayerState(client.id, types.PLAYER_STATE.PLAYING);
+    });
 
     console.log('Filling deck');
     fillDeck();
@@ -450,7 +468,7 @@ function advanceTurn(depth = 0)
         // Make players in callbackable states to go out
         else if (gameState.currentCardPullCnt === 0 && (playerData.state === types.PLAYER_STATE.CALLBACKABLE || playerData.state === types.PLAYER_STATE.CALLBACKABLE_SAID_UNO))
         {
-            playerData.state = types.PLAYER_STATE.OUT;
+            setPlayerState(candidateClientId, types.PLAYER_STATE.OUT);
             console.log(getNameOfClient(candidateClientId) + " (" + candidateClientId + ") is out!");
             io.emit('player out', candidateClientId);
             advanceTurn(depth + 1);
@@ -460,6 +478,15 @@ function advanceTurn(depth = 0)
             io.emit('current player', {cid: candidateClientId});
         }
     }
+}
+
+/**
+ * Flips current turn direction, and signals all clients
+ */
+function flipTurnDirection()
+{
+    gameState.turnDirection *= -1;
+    io.emit('turn direction',gameState.turnDirection);
 }
 
 /**
@@ -508,7 +535,8 @@ io.on('connection', function(socket)
      */
     socket.on('disconnect', function()
     {
-        console.log('user has disconnected');
+        let name = getNameOfClient(socket.id);
+        console.log('The user has disconnected:', name);
         if (disconnectClientWithId(socket.id))
         {
             io.emit('client list', getPublishableClientList());
@@ -521,9 +549,10 @@ io.on('connection', function(socket)
     socket.on('client rename', function(name)
     {
         console.log('Client rename: ' + name);
+        let oldName = getNameOfClient(socket.id);
         if (renameClient(socket.id, name))
         {
-            console.log('Advertising client rename');
+            console.log('Advertising client rename:', oldName, "=>", name);
             io.emit('client list', getPublishableClientList());
         }
     });
@@ -648,8 +677,7 @@ io.on('connection', function(socket)
         switch (card.face)
         {
             case types.FACE.TURNAROUND:
-                gameState.turnDirection *= -1;
-                io.emit('turn direction',gameState.turnDirection);
+                flipTurnDirection();
                 break;
             case types.FACE.PLUS2:
                 gameState.currentCardPullCnt += 2;
@@ -687,7 +715,7 @@ io.on('connection', function(socket)
         console.log(getNameOfClient(socket.id) + " (" + socket.id + ") has " + gameState.players[socket.id].deck.length + " cards left");
         if ( gameState.players[socket.id].deck.length === 0)
         {
-            gameState.players[socket.id].state = (gameState.players[socket.id].state === types.PLAYER_STATE.SAID_UNO ? types.PLAYER_STATE.CALLBACKABLE_SAID_UNO : types.PLAYER_STATE.CALLBACKABLE);
+            setPlayerState(socked.id, gameState.players[socket.id].state === types.PLAYER_STATE.SAID_UNO ? types.PLAYER_STATE.CALLBACKABLE_SAID_UNO : types.PLAYER_STATE.CALLBACKABLE);
             io.emit('player callbackable', socket.id);
         }
 
@@ -711,7 +739,7 @@ io.on('connection', function(socket)
         }
 
         // Drawing a card discards said UNO
-        gameState.players[socket.id].state = types.PLAYER_STATE.PLAYING;
+        setPlayerState(socket.id, types.PLAYER_STATE.PLAYING);
 
         let pullCardCnt = Math.max(1, gameState.currentCardPullCnt);
         console.log('And (s)he can and pulls ' + pullCardCnt + ' card(s)');
@@ -766,8 +794,8 @@ io.on('connection', function(socket)
 
         console.log("And (s)he can!");
 
-        if (playerData.state === types.PLAYER_STATE.PLAYING) playerData.state = types.PLAYER_STATE.SAID_UNO;
-        else if (playerData.state === types.PLAYER_STATE.CALLBACKABLE) playerData.state = types.PLAYER_STATE.CALLBACKABLE_SAID_UNO;
+        if (playerData.state === types.PLAYER_STATE.PLAYING) setPlayerState(socket.id, types.PLAYER_STATE.SAID_UNO);
+        else if (playerData.state === types.PLAYER_STATE.CALLBACKABLE) setPlayerState(socket.id, types.PLAYER_STATE.CALLBACKABLE_SAID_UNO);
         io.emit('said uno', socket.id);
     });
 
@@ -799,10 +827,10 @@ io.on('connection', function(socket)
             return;
         }
 
-        console.log("And (s)he is right! Punishment awaits " + getNameOfClient(reportedCid) + " (" + reportedCid + ")");
+        console.log("And (s)he is right! Punishment awaits " + getNameOfClient(reportedCid) + " (", reportedCid, ")");
         io.emit('missed uno busted', {busted: reportedCid, buster: socket.id});
 
-        gameState.players[reportedCid].state = types.PLAYER_STATE.PLAYING;
+        setPlayerState(reportedCid, types.PLAYER_STATE.PLAYING);
         for (let i = 0; i < missedUnoCardCnt; ++i)
         {
             pullAndAddCardToClient(reportedCid);
@@ -811,14 +839,52 @@ io.on('connection', function(socket)
 
     if (isAdmin)
     {
-        socket.on('game restart', function() {
-            console.log('Game restart');
+        let client = {id: socket.id, name: "???", socket: socket};
+        admins.push(client);
+
+        socket.on('admin restart', function() {
+            console.log('admin restart');
             restartGame();
+        });
+
+        socket.on('admin draw', function(cardToBeDrawn) {
+            console.log('admin draw', cardToBeDrawn);
+            let removedCardIdx = null;
+            gameState.deck.forEach((card, idx) => {
+                if (card.color === cardToBeDrawn.color && card.face === cardToBeDrawn.face)
+                {
+                    removedCardIdx = idx;
+                    return false; // break
+                }
+            });
+            if (removedCardIdx === null)
+            {
+                console.log("But that card is not in the deck (deck size:", gameState.deck.length, ")");
+                return;
+            }
+            let card = gameState.deck.splice(removedCardIdx, 1)[0];
+            addCardToClient(card, cardToBeDrawn.cid);
+            hideAndEmitCardPull({cid: cardToBeDrawn.cid, card: card}, clients);
+        });
+
+        socket.on('admin advance', function() {
+            console.log('admin advance');
+            advanceTurn();
+        });
+
+        socket.on('admin flip direction', function() {
+            console.log('admin flip direction');
+            flipTurnDirection();
+        });
+
+        socket.on('admin set state', function(data) {
+            console.log('admin set state', data);
+            setPlayerState(data.cid, data.state);
         });
     }
     else
     {
-        var client = {id: socket.id, name: "???", socket: socket};
+        let client = {id: socket.id, name: "???", socket: socket};
         clients.push(client);
         io.emit('client list', getPublishableClientList());
 
@@ -839,9 +905,10 @@ io.on('connection', function(socket)
         gameState.playedCards.forEach(card => io.to(socket.id).emit('card played', {cid: null, card: card}));
 
         // TODO assign random name at the first place
-        if (renameClient(socket.id, getRandomName()))
+        let newName = getRandomName();
+        if (renameClient(socket.id, newName))
         {
-            console.log('Advertising client rename');
+            console.log('Advertising new client\'s name:', newName);
             io.emit('client list', getPublishableClientList());
         }
 

@@ -6,6 +6,8 @@
 
     </style>
     <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="admin.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script type="text/javascript" src="types.js"></script>
@@ -14,8 +16,20 @@
 </head>
 <body>
 <div id="actions">
-    <h4>Actions</h4>
-    <a href="#" id="cmd-restart">(Re)start game</a>
+    <h2>KUKUNO Admin</h2>
+    <button id="cmd-restart">(Re)start game</button>
+    <button id="cmd-advance">Advance turn</button>
+    <button id="cmd-flip-direction">Flip direction</button>
+    <fieldset>
+        <legend>Give card</legend>
+        To <select id="giveCardTarget"></select>
+        <hr>
+        <span id="giveCardSelectors"></span>
+    </fieldset>
+    <fieldset>
+        <legend>Players</legend>
+        <span id="clientList"></span>
+    </fieldset>
 </div>
 </body>
 </html>

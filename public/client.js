@@ -107,6 +107,7 @@ function createDeckChosantOverlay()
  */
 function createCard(card)
 {
+    console.log('Creating card', card);
     return '<div class="card card-' + (card.color === types.COLOR.SECRET ? 'secret' : types.colorToString(card.color).toLowerCase()) + ' card-' + (card.face === types.FACE.SECRET ? 'secret' : card.face) + '" data-color="' + card.color + '" data-face="' + card.face + '"><div class="card-inner"></div><div class="card-num card-face-center" data-face="' + types.faceToString(card.face).toLowerCase() + '">' + types.faceToSymbol(card.face) + '</div><div class="card-num card-face-top" data-face="' + types.faceToString(card.face).toLowerCase() + '">' + types.faceToSymbol(card.face) + '</div><div class="card-num card-face-bottom" data-face="' + types.faceToString(card.face).toLowerCase() + '">' + types.faceToSymbol(card.face) + '</div></div>';
 }
 
