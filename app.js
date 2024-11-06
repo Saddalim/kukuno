@@ -9,6 +9,7 @@ var clients = [];
 var admins = [];
 var wasDeniedButCanPutDenyAgainBeforeNextPlayerPutAnythingPlayerId = 0;
 
+const port = 7654;
 const missedUnoCardCnt = 3;
 const maxPlayerNameLength = 50;
 
@@ -715,7 +716,7 @@ io.on('connection', function(socket)
         console.log(getNameOfClient(socket.id) + " (" + socket.id + ") has " + gameState.players[socket.id].deck.length + " cards left");
         if ( gameState.players[socket.id].deck.length === 0)
         {
-            setPlayerState(socked.id, gameState.players[socket.id].state === types.PLAYER_STATE.SAID_UNO ? types.PLAYER_STATE.CALLBACKABLE_SAID_UNO : types.PLAYER_STATE.CALLBACKABLE);
+            setPlayerState(socket.id, gameState.players[socket.id].state === types.PLAYER_STATE.SAID_UNO ? types.PLAYER_STATE.CALLBACKABLE_SAID_UNO : types.PLAYER_STATE.CALLBACKABLE);
             io.emit('player callbackable', socket.id);
         }
 
@@ -915,7 +916,7 @@ io.on('connection', function(socket)
     }
 });
 
-http.listen(3000, function()
+http.listen(port, function()
 {
-    console.log('listening on *:3000');
+    console.log('listening on *:' + port);
 });
